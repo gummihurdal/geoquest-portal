@@ -4,1061 +4,414 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GeoQuest — Explore the world one quiz at a time</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-  :root {
-    --ocean: #0a1628;
-    --deep: #0d1f3c;
-    --mid: #1a3a5c;
-    --teal: #00b4a6;
-    --gold: #f5c842;
-    --coral: #ff6b6b;
-    --mint: #a8e6cf;
-    --text: #e8f4f8;
-    --muted: #7a9bb5;
-    --card: rgba(255,255,255,0.04);
-    --border: rgba(255,255,255,0.08);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--ocean);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Animated starfield background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: 
-      radial-gradient(circle at 20% 30%, rgba(0,180,166,0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(245,200,66,0.06) 0%, transparent 50%),
-      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
-      radial-gradient(1px 1px at 25% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 50% 20%, rgba(255,255,255,0.5) 0%, transparent 100%),
-      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 85% 35%, rgba(255,255,255,0.4) 0%, transparent 100%),
-      radial-gradient(2px 2px at 40% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
-      radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.4) 0%, transparent 100%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* NAVIGATION */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 40px;
-    background: rgba(10,22,40,0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .logo {
-    font-family: 'Fraunces', serif;
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: var(--teal);
-    letter-spacing: -0.5px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .logo span { color: var(--gold); }
-
-  .nav-links {
-    display: flex;
-    gap: 8px;
-    list-style: none;
-  }
-
-  .nav-links button {
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .nav-links button:hover, .nav-links button.active {
-    color: var(--text);
-    background: var(--card);
-  }
-
-  .nav-user {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .streak-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(245,200,66,0.12);
-    border: 1px solid rgba(245,200,66,0.3);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    color: var(--gold);
-    font-weight: 600;
-  }
-
-  /* SCREENS */
-  .screen { display: none; position: relative; z-index: 1; }
-  .screen.active { display: block; }
-
-  /* HERO */
-  #screen-home {
-    padding: 120px 40px 60px;
-    min-height: 100vh;
-  }
-
-  .hero {
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: center;
-    padding: 60px 0 80px;
-  }
-
-  .hero-eyebrow {
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--teal);
-    margin-bottom: 24px;
-  }
-
-  .hero h1 {
-    font-family: 'Fraunces', serif;
-    font-size: clamp(2.5rem, 6vw, 5rem);
-    font-weight: 900;
-    line-height: 1.05;
-    margin-bottom: 24px;
-    color: var(--text);
-  }
-
-  .hero h1 em {
-    font-style: italic;
-    color: var(--teal);
-  }
-
-  .hero-sub {
-    font-size: 1.15rem;
-    color: var(--muted);
-    max-width: 500px;
-    margin: 0 auto 48px;
-    line-height: 1.6;
-    font-weight: 300;
-  }
-
-  .hero-sub strong {
-    color: var(--gold);
-    font-weight: 600;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .btn-primary {
-    background: var(--teal);
-    color: var(--ocean);
-    border: none;
-    padding: 16px 36px;
-    border-radius: 50px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.3px;
-  }
-
-  .btn-primary:hover {
-    background: #00cfc0;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0,180,166,0.4);
-  }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-    padding: 16px 36px;
-    border-radius: 50px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--teal);
-    color: var(--teal);
-    transform: translateY(-2px);
-  }
-
-  /* GLOBE DECORATION */
-  .globe-ring {
-    width: 300px;
-    height: 300px;
-    margin: -20px auto 40px;
-    position: relative;
-  }
-
-  .globe-ring svg {
-    width: 100%;
-    height: 100%;
-    animation: spin 30s linear infinite;
-  }
-
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  /* CATEGORY CARDS */
-  .section-title {
-    font-family: 'Fraunces', serif;
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-    text-align: center;
-  }
-
-  .section-sub {
-    color: var(--muted);
-    text-align: center;
-    margin-bottom: 40px;
-    font-size: 0.95rem;
-  }
-
-  .categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
-    max-width: 1000px;
-    margin: 0 auto 80px;
-  }
-
-  .cat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 28px 24px;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-    text-align: center;
-  }
-
-  .cat-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, var(--cat-color, var(--teal)) 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .cat-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--cat-color, var(--teal));
-    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-  }
-
-  .cat-card:hover::before { opacity: 0.08; }
-
-  .cat-icon {
-    font-size: 2.5rem;
-    margin-bottom: 16px;
-    display: block;
-  }
-
-  .cat-name {
-    font-family: 'Fraunces', serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-    position: relative;
-  }
-
-  .cat-desc {
-    font-size: 0.82rem;
-    color: var(--muted);
-    line-height: 1.4;
-    position: relative;
-  }
-
-  .cat-count {
-    display: inline-block;
-    margin-top: 12px;
-    font-size: 0.75rem;
-    color: var(--cat-color, var(--teal));
-    font-weight: 600;
-    position: relative;
-  }
-
-  /* STATS BAR */
-  .stats-bar {
-    display: flex;
-    gap: 24px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 60px;
-    padding: 28px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    max-width: 700px;
-    margin: 0 auto 60px;
-  }
-
-  .stat-item {
-    text-align: center;
-    flex: 1;
-    min-width: 100px;
-  }
-
-  .stat-num {
-    font-family: 'Fraunces', serif;
-    font-size: 2rem;
-    font-weight: 900;
-    color: var(--teal);
-    display: block;
-  }
-
-  .stat-label {
-    font-size: 0.78rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 4px;
-  }
-
-  /* QUIZ SCREEN */
-  #screen-quiz {
-    padding: 100px 20px 60px;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .quiz-container {
-    max-width: 680px;
-    width: 100%;
-    margin: 0 auto;
-  }
-
-  .quiz-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 32px;
-  }
-
-  .quiz-progress-wrap {
-    flex: 1;
-    margin: 0 20px;
-  }
-
-  .quiz-progress-bar {
-    height: 4px;
-    background: var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .quiz-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--teal), var(--gold));
-    border-radius: 4px;
-    transition: width 0.5s ease;
-  }
-
-  .quiz-num {
-    font-size: 0.85rem;
-    color: var(--muted);
-    text-align: center;
-    margin-top: 8px;
-  }
-
-  .quiz-timer {
-    font-family: 'Fraunces', serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--gold);
-    min-width: 48px;
-    text-align: right;
-  }
-
-  .quiz-timer.urgent { color: var(--coral); animation: pulse 0.5s ease infinite alternate; }
-  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
-
-  .quiz-category-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
-    color: var(--teal);
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-  }
-
-  .question-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 28px;
-    padding: 40px;
-    margin-bottom: 24px;
-  }
-
-  .question-text {
-    font-family: 'Fraunces', serif;
-    font-size: clamp(1.2rem, 3vw, 1.7rem);
-    font-weight: 700;
-    line-height: 1.3;
-    color: var(--text);
-  }
-
-  .options-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .option-btn {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px 20px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-    line-height: 1.3;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .option-letter {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
-    flex-shrink: 0;
-    color: var(--muted);
-  }
-
-  .option-btn:hover:not(:disabled) {
-    border-color: var(--teal);
-    background: rgba(0,180,166,0.08);
-    transform: translateY(-2px);
-  }
-
-  .option-btn.correct {
-    border-color: var(--mint);
-    background: rgba(168,230,207,0.12);
-    animation: correctPop 0.4s ease;
-  }
-
-  .option-btn.correct .option-letter {
-    background: var(--mint);
-    color: var(--ocean);
-  }
-
-  .option-btn.wrong {
-    border-color: var(--coral);
-    background: rgba(255,107,107,0.1);
-  }
-
-  .option-btn.wrong .option-letter {
-    background: var(--coral);
-    color: white;
-  }
-
-  .option-btn:disabled { cursor: not-allowed; }
-
-  @keyframes correctPop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.03); }
-    100% { transform: scale(1); }
-  }
-
-  .fun-fact {
-    background: rgba(245,200,66,0.08);
-    border: 1px solid rgba(245,200,66,0.2);
-    border-radius: 16px;
-    padding: 16px 20px;
-    margin-top: 16px;
-    font-size: 0.9rem;
-    color: var(--gold);
-    display: none;
-    animation: fadeIn 0.4s ease;
-  }
-
-  .fun-fact.show { display: flex; gap: 10px; align-items: flex-start; }
-  .fun-fact-icon { font-size: 1.2rem; flex-shrink: 0; }
-
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* RESULTS SCREEN */
-  #screen-results {
-    padding: 100px 20px 60px;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .results-container {
-    max-width: 560px;
-    width: 100%;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .results-score-ring {
-    width: 180px;
-    height: 180px;
-    margin: 0 auto 32px;
-    position: relative;
-  }
-
-  .results-score-ring svg {
-    transform: rotate(-90deg);
-  }
-
-  .score-center {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .score-num {
-    font-family: 'Fraunces', serif;
-    font-size: 2.8rem;
-    font-weight: 900;
-    color: var(--teal);
-    line-height: 1;
-  }
-
-  .score-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .results-title {
-    font-family: 'Fraunces', serif;
-    font-size: 2rem;
-    font-weight: 900;
-    margin-bottom: 8px;
-  }
-
-  .results-subtitle {
-    color: var(--muted);
-    margin-bottom: 32px;
-  }
-
-  .results-stats {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-  }
-
-  .result-stat {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px 24px;
-    flex: 1;
-    min-width: 100px;
-  }
-
-  .result-stat-num {
-    font-family: 'Fraunces', serif;
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: var(--gold);
-    display: block;
-  }
-
-  .result-stat-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-
-  /* LEADERBOARD */
-  #screen-leaderboard {
-    padding: 100px 20px 60px;
-    min-height: 100vh;
-  }
-
-  .lb-container {
-    max-width: 700px;
-    margin: 0 auto;
-  }
-
-  .lb-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 8px;
-    margin-top: 24px;
-  }
-
-  .lb-table th {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    font-weight: 500;
-    padding: 0 20px 8px;
-    text-align: left;
-  }
-
-  .lb-row td {
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 16px 20px;
-    font-size: 0.95rem;
-  }
-
-  .lb-row td:first-child { border-radius: 16px 0 0 16px; border-right: none; }
-  .lb-row td:last-child { border-radius: 0 16px 16px 0; border-left: none; text-align: right; }
-  .lb-row td:not(:first-child):not(:last-child) { border-left: none; border-right: none; }
-
-  .lb-row.me td { background: rgba(0,180,166,0.08); border-color: rgba(0,180,166,0.2); }
-
-  .lb-rank {
-    font-family: 'Fraunces', serif;
-    font-size: 1.2rem;
-    font-weight: 900;
-    color: var(--muted);
-    width: 40px;
-  }
-
-  .lb-rank.gold { color: var(--gold); }
-  .lb-rank.silver { color: #c0c0c0; }
-  .lb-rank.bronze { color: #cd7f32; }
-
-  .lb-name { font-weight: 600; }
-  .lb-country { color: var(--muted); font-size: 0.85rem; }
-  .lb-score { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 700; color: var(--teal); }
-
-  /* DAILY CHALLENGE */
-  .daily-banner {
-    background: linear-gradient(135deg, rgba(0,180,166,0.15), rgba(245,200,66,0.1));
-    border: 1px solid rgba(0,180,166,0.3);
-    border-radius: 24px;
-    padding: 28px 32px;
-    max-width: 700px;
-    margin: 0 auto 48px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-  }
-
-  .daily-icon { font-size: 3rem; }
-
-  .daily-text h3 {
-    font-family: 'Fraunces', serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .daily-text p { color: var(--muted); font-size: 0.9rem; }
-
-  .daily-btn {
-    margin-left: auto;
-    background: var(--teal);
-    color: var(--ocean);
-    border: none;
-    padding: 12px 24px;
-    border-radius: 50px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-    font-family: 'DM Sans', sans-serif;
-  }
-
-  .daily-btn:hover { background: #00cfc0; transform: translateY(-1px); }
-
-  /* LOGIN MODAL */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(8px);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .modal-overlay.show { display: flex; }
-
-  .modal {
-    background: var(--deep);
-    border: 1px solid var(--border);
-    border-radius: 28px;
-    padding: 40px;
-    max-width: 400px;
-    width: 90%;
-    animation: modalIn 0.3s ease;
-  }
-
-  @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.95) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .modal h2 {
-    font-family: 'Fraunces', serif;
-    font-size: 1.8rem;
-    font-weight: 900;
-    margin-bottom: 8px;
-  }
-
-  .modal p { color: var(--muted); margin-bottom: 28px; font-size: 0.9rem; }
-
-  .form-group { margin-bottom: 16px; }
-
-  .form-group label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    color: var(--muted);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-  }
-
-  .form-group input, .form-group select {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 16px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .form-group input:focus, .form-group select:focus {
-    border-color: var(--teal);
-  }
-
-  .form-group select option { background: var(--deep); }
-
-  .modal-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 24px;
-  }
-
-  .btn-full {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-  }
-
-  .btn-teal { background: var(--teal); color: var(--ocean); }
-  .btn-teal:hover { background: #00cfc0; transform: translateY(-1px); }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); border-color: var(--text); }
-
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--deep);
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    padding: 12px 24px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    z-index: 300;
-    transition: transform 0.3s ease;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.success { border-color: var(--mint); color: var(--mint); }
-  .toast.error { border-color: var(--coral); color: var(--coral); }
-
-  /* RESPONSIVE */
-  @media (max-width: 600px) {
-    nav { padding: 12px 20px; }
-    #screen-home { padding: 80px 16px 40px; }
-    .options-grid { grid-template-columns: 1fr; }
-    .question-card { padding: 24px; }
-    .daily-banner { flex-direction: column; text-align: center; }
-    .daily-btn { margin-left: 0; }
-    .categories-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  /* LOADING */
-  .loading {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border);
-    border-top-color: var(--teal);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-
-  .empty-state .icon { font-size: 3rem; margin-bottom: 16px; }
+:root {
+  --night: #030b1a;
+  --deep: #061226;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.07);
+  --teal: #00d4c8;
+  --gold: #ffd166;
+  --coral: #ff6b6b;
+  --mint: #06ffa5;
+  --purple: #a78bfa;
+  --text: #eaf4ff;
+  --muted: #6b8da8;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--night); color:var(--text); overflow-x:hidden; min-height:100vh; }
+
+#globe-canvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 48px; height:68px;
+  background:rgba(3,11,26,0.85); backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+}
+.logo {
+  font-family:'Playfair Display',serif; font-size:1.45rem; font-weight:900;
+  background:linear-gradient(135deg,var(--teal),var(--gold));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.nav-center { display:flex; gap:4px; }
+.nav-btn { background:none; border:none; color:var(--muted); font-family:'Inter',sans-serif; font-size:0.875rem; font-weight:500; padding:8px 18px; border-radius:50px; cursor:pointer; transition:all 0.2s; }
+.nav-btn:hover,.nav-btn.active { color:var(--text); background:var(--card); }
+.nav-right { display:flex; align-items:center; gap:12px; }
+.streak-pill { display:flex; align-items:center; gap:6px; background:rgba(255,209,102,0.1); border:1px solid rgba(255,209,102,0.25); padding:6px 14px; border-radius:50px; font-size:0.8rem; color:var(--gold); font-weight:600; }
+.btn-nav { background:linear-gradient(135deg,var(--teal),#0099cc); border:none; color:var(--night); padding:9px 22px; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.875rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.btn-nav:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(0,212,200,0.35); }
+
+.screen { display:none; position:relative; z-index:1; }
+.screen.active { display:block; }
+
+#screen-home { padding-top:68px; }
+.hero-section { min-height:calc(100vh - 68px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 24px; text-align:center; }
+
+.hero-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(0,212,200,0.08); border:1px solid rgba(0,212,200,0.2); padding:8px 18px; border-radius:50px; font-size:0.78rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:32px; animation:fadeUp 0.8s ease both; }
+.hero-title { font-family:'Playfair Display',serif; font-size:clamp(3rem,7vw,6.5rem); font-weight:900; line-height:1.0; margin-bottom:24px; animation:fadeUp 0.8s 0.1s ease both; }
+.hero-title .grad { font-style:italic; background:linear-gradient(135deg,var(--teal) 0%,var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.hero-sub { font-size:1.1rem; color:var(--muted); max-width:480px; line-height:1.7; margin-bottom:48px; font-weight:300; animation:fadeUp 0.8s 0.2s ease both; }
+.hero-sub strong { color:var(--gold); font-weight:600; }
+.hero-actions { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; animation:fadeUp 0.8s 0.3s ease both; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+.btn-primary { background:linear-gradient(135deg,var(--teal),#0099ee); border:none; color:var(--night); padding:16px 38px; border-radius:50px; font-family:'Inter',sans-serif; font-size:1rem; font-weight:700; cursor:pointer; transition:all 0.25s; box-shadow:0 4px 24px rgba(0,212,200,0.3); }
+.btn-primary:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(0,212,200,0.45); }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); padding:16px 38px; border-radius:50px; font-family:'Inter',sans-serif; font-size:1rem; font-weight:500; cursor:pointer; transition:all 0.25s; }
+.btn-ghost:hover { border-color:var(--teal); color:var(--teal); transform:translateY(-2px); }
+
+.stats-row { display:flex; gap:1px; background:var(--border); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.stat-cell { flex:1; padding:32px 20px; text-align:center; background:var(--deep); }
+.stat-val { font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:900; background:linear-gradient(135deg,var(--teal),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; display:block; }
+.stat-lbl { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; margin-top:6px; }
+
+.section { padding:80px 48px; max-width:1200px; margin:0 auto; }
+.sec-eye { font-size:0.72rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--teal); margin-bottom:12px; }
+.sec-title { font-family:'Playfair Display',serif; font-size:2.8rem; font-weight:900; margin-bottom:12px; line-height:1.1; }
+.sec-sub { color:var(--muted); font-size:0.95rem; margin-bottom:48px; line-height:1.6; }
+
+.daily-card { background:linear-gradient(135deg,rgba(0,212,200,0.08),rgba(167,139,250,0.08)); border:1px solid rgba(0,212,200,0.2); border-radius:24px; padding:28px 32px; margin-bottom:48px; display:flex; align-items:center; gap:24px; }
+.daily-icon { font-size:3rem; }
+.daily-content h3 { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; margin-bottom:4px; }
+.daily-content p { font-size:0.875rem; color:var(--muted); }
+.daily-cta { margin-left:auto; }
+
+.continents-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+.cont-card { position:relative; overflow:hidden; border-radius:24px; border:1px solid var(--border); background:var(--card); padding:32px 28px; cursor:pointer; transition:all 0.35s cubic-bezier(0.23,1,0.32,1); }
+.cont-card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,var(--cc,var(--teal)) 0%,transparent 70%); opacity:0; transition:opacity 0.35s; }
+.cont-card:hover { transform:translateY(-6px) scale(1.01); border-color:var(--cc,var(--teal)); box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+.cont-card:hover::before { opacity:0.07; }
+.cont-emoji { font-size:3.5rem; margin-bottom:20px; display:block; transition:transform 0.35s; position:relative; }
+.cont-card:hover .cont-emoji { transform:scale(1.15) rotate(-5deg); }
+.cont-name { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; margin-bottom:6px; position:relative; }
+.cont-stats { font-size:0.82rem; color:var(--muted); margin-bottom:16px; position:relative; }
+.cont-tag { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.06); border:1px solid var(--border); padding:4px 12px; border-radius:50px; font-size:0.75rem; color:var(--cc,var(--teal)); font-weight:600; position:relative; }
+
+.cats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.cat-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:28px 20px; text-align:center; cursor:pointer; transition:all 0.3s cubic-bezier(0.23,1,0.32,1); position:relative; overflow:hidden; }
+.cat-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--cc2,var(--teal)),transparent); transform:scaleX(0); transition:transform 0.3s; transform-origin:left; }
+.cat-card:hover { transform:translateY(-4px); border-color:var(--cc2,var(--teal)); }
+.cat-card:hover::after { transform:scaleX(1); }
+.cat-icon-w { width:56px; height:56px; border-radius:16px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 16px; transition:all 0.3s; }
+.cat-card:hover .cat-icon-w { background:rgba(255,255,255,0.08); transform:scale(1.1); }
+.cat-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; margin-bottom:6px; }
+.cat-count { font-size:0.75rem; color:var(--muted); }
+
+#screen-continent { padding:68px 0 0; min-height:100vh; }
+.cq-wrap { max-width:800px; margin:0 auto; padding:48px 24px; }
+.cq-header { text-align:center; margin-bottom:40px; }
+.cq-big-emoji { font-size:5rem; margin-bottom:16px; display:block; }
+.cq-header h2 { font-family:'Playfair Display',serif; font-size:3rem; font-weight:900; margin-bottom:8px; }
+.cq-header p { color:var(--muted); }
+.cq-timer-big { font-family:'Playfair Display',serif; font-size:4rem; font-weight:900; background:linear-gradient(135deg,var(--teal),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; line-height:1; text-align:center; margin-bottom:4px; }
+.cq-timer-big.urgent { background:linear-gradient(135deg,var(--coral),#ff9f43); -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:pulse 0.5s ease infinite alternate; }
+.cq-timer-lbl { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; text-align:center; margin-bottom:32px; }
+@keyframes pulse { from{opacity:1} to{opacity:0.4} }
+
+.cq-box { background:var(--card); border:1px solid var(--border); border-radius:24px; padding:32px; margin-bottom:24px; }
+.cq-prog-info { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.cq-prog-info span { font-size:0.85rem; color:var(--muted); }
+.cq-prog-info strong { color:var(--teal); font-size:1.1rem; }
+.cq-bar { height:6px; background:var(--border); border-radius:6px; overflow:hidden; margin-bottom:20px; }
+.cq-bar-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--teal),var(--gold)); transition:width 0.5s cubic-bezier(0.23,1,0.32,1); }
+.cq-input-row { display:flex; gap:12px; }
+.cq-input { flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:14px; padding:14px 20px; color:var(--text); font-family:'Inter',sans-serif; font-size:1rem; outline:none; transition:border-color 0.2s; }
+.cq-input:focus { border-color:var(--teal); }
+.cq-input::placeholder { color:var(--muted); }
+.btn-enter { background:linear-gradient(135deg,var(--teal),#0099ee); border:none; color:var(--night); padding:14px 28px; border-radius:14px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.95rem; transition:all 0.2s; white-space:nowrap; }
+.btn-enter:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,212,200,0.35); }
+.found-tags { display:flex; flex-wrap:wrap; gap:8px; margin-top:24px; min-height:40px; }
+.found-tag { background:rgba(0,212,200,0.1); border:1px solid rgba(0,212,200,0.25); color:var(--teal); padding:6px 14px; border-radius:50px; font-size:0.82rem; font-weight:500; animation:popIn 0.3s cubic-bezier(0.23,1,0.32,1); }
+@keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+
+.cq-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px; }
+.btn-hint { background:rgba(255,209,102,0.1); border:1px solid rgba(255,209,102,0.25); color:var(--gold); padding:12px 24px; border-radius:50px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.875rem; transition:all 0.2s; }
+.btn-hint:hover { background:rgba(255,209,102,0.15); }
+.btn-giveup { background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.2); color:var(--coral); padding:12px 24px; border-radius:50px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.875rem; transition:all 0.2s; }
+
+.missed-box { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:24px; margin-top:16px; display:none; }
+.missed-title { font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:12px; }
+.missed-tags { display:flex; flex-wrap:wrap; gap:8px; }
+.missed-tag { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted); padding:5px 12px; border-radius:50px; font-size:0.78rem; }
+
+#screen-quiz { padding:68px 0 0; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+.q-wrap { max-width:680px; width:100%; padding:40px 24px; }
+.q-top { display:flex; align-items:center; gap:16px; margin-bottom:32px; }
+.q-prog-w { flex:1; }
+.q-bar { height:5px; background:var(--border); border-radius:5px; overflow:hidden; }
+.q-bar-fill { height:100%; border-radius:5px; background:linear-gradient(90deg,var(--teal),var(--gold)); transition:width 0.5s ease; }
+.q-num { font-size:0.8rem; color:var(--muted); margin-top:6px; text-align:center; }
+.q-timer { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:900; color:var(--gold); min-width:44px; text-align:right; }
+.q-timer.urgent { color:var(--coral); animation:pulse 0.5s ease infinite alternate; }
+.q-cat { display:inline-flex; align-items:center; gap:8px; font-size:0.75rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--teal); margin-bottom:16px; }
+.q-box { background:var(--card); border:1px solid var(--border); border-radius:28px; padding:40px; margin-bottom:20px; position:relative; overflow:hidden; }
+.q-box::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--teal),transparent); }
+.q-text { font-family:'Playfair Display',serif; font-size:clamp(1.2rem,3vw,1.75rem); font-weight:700; line-height:1.3; }
+.opts-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.opt-btn { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:18px 20px; color:var(--text); font-family:'Inter',sans-serif; font-size:0.92rem; cursor:pointer; transition:all 0.2s; text-align:left; display:flex; align-items:center; gap:12px; }
+.opt-btn:hover:not(:disabled) { border-color:var(--teal); transform:translateY(-2px); background:rgba(0,212,200,0.05); }
+.opt-letter { width:30px; height:30px; border-radius:10px; background:rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; flex-shrink:0; color:var(--muted); }
+.opt-btn.correct { border-color:var(--mint); background:rgba(6,255,165,0.07); }
+.opt-btn.correct .opt-letter { background:var(--mint); color:var(--night); }
+.opt-btn.wrong { border-color:var(--coral); background:rgba(255,107,107,0.07); }
+.opt-btn.wrong .opt-letter { background:var(--coral); color:white; }
+.opt-btn:disabled { cursor:not-allowed; }
+.fact-box { background:rgba(255,209,102,0.06); border:1px solid rgba(255,209,102,0.18); border-radius:18px; padding:16px 20px; margin-top:14px; display:none; animation:fadeUp 0.4s ease; gap:10px; align-items:flex-start; }
+.fact-box.show { display:flex; }
+.fact-icon { font-size:1.1rem; flex-shrink:0; }
+.fact-text { font-size:0.875rem; color:var(--gold); line-height:1.5; }
+
+#screen-results { padding:68px 0 0; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+.res-wrap { max-width:560px; width:100%; padding:40px 24px; text-align:center; }
+.score-ring { width:200px; height:200px; margin:0 auto 40px; position:relative; }
+.score-ring svg { transform:rotate(-90deg); }
+.score-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.score-big { font-family:'Playfair Display',serif; font-size:3rem; font-weight:900; background:linear-gradient(135deg,var(--teal),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; line-height:1; }
+.score-lbl { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; margin-top:4px; }
+.res-title { font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:900; margin-bottom:8px; }
+.res-sub { color:var(--muted); margin-bottom:36px; font-size:0.95rem; }
+.res-cards { display:flex; gap:12px; justify-content:center; margin-bottom:36px; flex-wrap:wrap; }
+.res-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:20px 28px; flex:1; min-width:110px; }
+.res-card-val { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; color:var(--gold); display:block; }
+.res-card-lbl { font-size:0.72rem; color:var(--muted); margin-top:4px; }
+.res-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+#screen-leaderboard { padding:68px 0 0; min-height:100vh; }
+.lb-wrap { max-width:760px; margin:0 auto; padding:48px 24px; }
+.lb-list { display:flex; flex-direction:column; gap:8px; }
+.lb-item { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:18px 24px; display:flex; align-items:center; gap:16px; transition:all 0.2s; }
+.lb-item:hover { border-color:rgba(0,212,200,0.2); transform:translateX(4px); }
+.lb-item.me { background:rgba(0,212,200,0.06); border-color:rgba(0,212,200,0.25); }
+.lb-rank { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:900; width:36px; text-align:center; color:var(--muted); }
+.lb-rank.r1{color:var(--gold)} .lb-rank.r2{color:#c0c0c0} .lb-rank.r3{color:#cd7f32}
+.lb-avatar { width:42px; height:42px; border-radius:14px; background:linear-gradient(135deg,var(--teal),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.lb-info { flex:1; }
+.lb-name { font-weight:600; font-size:0.95rem; }
+.lb-country { font-size:0.78rem; color:var(--muted); margin-top:2px; }
+.lb-pts { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:900; color:var(--teal); }
+.lb-games { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(12px); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { background:linear-gradient(160deg,#0a1a30,var(--deep)); border:1px solid var(--border); border-radius:32px; padding:44px; max-width:420px; width:90%; animation:modalIn 0.35s cubic-bezier(0.23,1,0.32,1); position:relative; overflow:hidden; }
+.modal::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--teal),transparent); }
+@keyframes modalIn { from{opacity:0;transform:scale(0.9) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal h2 { font-family:'Playfair Display',serif; font-size:2rem; font-weight:900; margin-bottom:6px; }
+.modal p { color:var(--muted); margin-bottom:28px; font-size:0.9rem; line-height:1.5; }
+.form-field { margin-bottom:16px; }
+.form-field label { display:block; font-size:0.72rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.form-field input,.form-field select { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:13px 18px; color:var(--text); font-family:'Inter',sans-serif; font-size:0.95rem; outline:none; transition:border-color 0.2s; }
+.form-field input:focus,.form-field select:focus { border-color:var(--teal); }
+.form-field select option { background:var(--deep); }
+.modal-btns { display:flex; flex-direction:column; gap:10px; margin-top:24px; }
+.btn-modal-p { background:linear-gradient(135deg,var(--teal),#0099ee); border:none; color:var(--night); padding:15px; border-radius:14px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; font-size:1rem; transition:all 0.2s; }
+.btn-modal-p:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,212,200,0.3); }
+.btn-modal-g { background:transparent; border:1px solid var(--border); color:var(--muted); padding:14px; border-radius:14px; font-weight:500; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.95rem; transition:all 0.2s; }
+.btn-modal-g:hover { color:var(--text); }
+
+.toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(80px); background:rgba(6,18,38,0.95); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:50px; padding:12px 24px; font-size:0.875rem; font-weight:500; z-index:400; transition:transform 0.35s cubic-bezier(0.23,1,0.32,1); white-space:nowrap; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.success { border-color:rgba(6,255,165,0.3); color:var(--mint); }
+.toast.error { border-color:rgba(255,107,107,0.3); color:var(--coral); }
+.toast.info { border-color:rgba(0,212,200,0.3); color:var(--teal); }
+
+.particle { position:fixed; pointer-events:none; z-index:500; border-radius:50%; animation:pfly 0.9s ease forwards; }
+@keyframes pfly { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0} }
+
+.spin { width:24px; height:24px; border-radius:50%; border:2px solid var(--border); border-top-color:var(--teal); animation:spinA 0.7s linear infinite; display:inline-block; }
+@keyframes spinA { to{transform:rotate(360deg)} }
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+.empty-state .ei { font-size:3.5rem; margin-bottom:16px; }
+
+@media(max-width:768px){
+  nav { padding:0 20px; }
+  .section { padding:48px 20px; }
+  .opts-grid { grid-template-columns:1fr; }
+  .q-box { padding:28px 20px; }
+  .continents-grid { grid-template-columns:1fr 1fr; }
+  .hero-title { font-size:2.8rem; }
+  .cats-grid { grid-template-columns:repeat(2,1fr); }
+  .daily-card { flex-direction:column; text-align:center; }
+  .daily-cta { margin-left:0; }
+  .stat-lbl { font-size:0.6rem; letter-spacing:1px; }
+}
 </style>
 </head>
 <body>
+<canvas id="globe-canvas"></canvas>
 
-<!-- NAVIGATION -->
 <nav>
-  <div class="logo">🌍 Geo<span>Quest</span></div>
-  <ul class="nav-links">
-    <li><button onclick="showScreen('home')" class="active" id="nav-home">Explore</button></li>
-    <li><button onclick="showScreen('leaderboard')" id="nav-leaderboard">🏆 Leaderboard</button></li>
-    <li><button onclick="showScreen('daily')" id="nav-daily">⚡ Daily</button></li>
-  </ul>
-  <div class="nav-user">
-    <div class="streak-badge" id="streak-badge" style="display:none">🔥 <span id="streak-num">0</span> day streak</div>
-    <button class="btn-secondary" style="padding:8px 20px;font-size:0.85rem" id="auth-btn" onclick="showLogin()">Sign in</button>
+  <div class="logo">GeoQuest</div>
+  <div class="nav-center">
+    <button class="nav-btn active" id="nav-home" onclick="showScreen('home')">Explore</button>
+    <button class="nav-btn" id="nav-continents" onclick="showScreen('continents')">🌍 Continents</button>
+    <button class="nav-btn" id="nav-leaderboard" onclick="showScreen('leaderboard')">🏆 Ranks</button>
+  </div>
+  <div class="nav-right">
+    <div class="streak-pill" id="streak-pill" style="display:none">🔥 <span id="streak-num">0</span></div>
+    <button class="btn-nav" id="auth-btn" onclick="showLogin()">Sign in</button>
   </div>
 </nav>
 
-<!-- HOME SCREEN -->
+<!-- HOME -->
 <div class="screen active" id="screen-home">
-  <div class="hero">
-    <p class="hero-eyebrow">Geography · Science · World Trivia</p>
-    <h1>Explore the world<br><em>one quiz at a time</em></h1>
-    <p class="hero-sub">Welcome, <strong>Sarah Thordarson</strong> 🇮🇸<br>Test your knowledge of countries, capitals, space and beyond</p>
+  <div class="hero-section">
+    <div class="hero-badge">🌍 Geography · Science · Space · Trivia</div>
+    <h1 class="hero-title">Explore the world<br><span class="grad">one quiz at a time</span></h1>
+    <p class="hero-sub">Welcome, <strong>Sarah Thordarson 🇮🇸</strong><br>Challenge your knowledge of every corner of our planet</p>
     <div class="hero-actions">
-      <button class="btn-primary" onclick="startDailyChallenge()">⚡ Today's Challenge</button>
-      <button class="btn-secondary" onclick="document.getElementById('categories-section').scrollIntoView({behavior:'smooth'})">Browse Topics</button>
+      <button class="btn-primary" onclick="startDailyChallenge()">⚡ Daily Challenge</button>
+      <button class="btn-ghost" onclick="showScreen('continents')">🌍 Continent Explorer</button>
     </div>
   </div>
 
-  <!-- Stats -->
-  <div class="stats-bar" id="stats-bar">
-    <div class="stat-item">
-      <span class="stat-num" id="stat-played">0</span>
-      <div class="stat-label">Quizzes Played</div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-num" id="stat-score">0</span>
-      <div class="stat-label">Total Score</div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-num" id="stat-streak">0</span>
-      <div class="stat-label">Day Streak 🔥</div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-num" id="stat-rank">#—</span>
-      <div class="stat-label">Global Rank</div>
-    </div>
+  <div class="stats-row">
+    <div class="stat-cell"><span class="stat-val" id="stat-played">0</span><div class="stat-lbl">Quizzes</div></div>
+    <div class="stat-cell"><span class="stat-val" id="stat-score">0</span><div class="stat-lbl">Points</div></div>
+    <div class="stat-cell"><span class="stat-val" id="stat-streak">0</span><div class="stat-lbl">Streak 🔥</div></div>
+    <div class="stat-cell"><span class="stat-val" id="stat-rank">#—</span><div class="stat-lbl">Global Rank</div></div>
   </div>
 
-  <!-- Categories -->
-  <div id="categories-section" style="max-width:1000px;margin:0 auto;padding:0 0 80px">
-    <h2 class="section-title">Choose Your Topic</h2>
-    <p class="section-sub">10 questions · 20 seconds each · Compete globally</p>
-    <div class="categories-grid" id="categories-grid">
-      <div style="text-align:center;padding:40px;grid-column:1/-1"><div class="loading"></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- QUIZ SCREEN -->
-<div class="screen" id="screen-quiz">
-  <div class="quiz-container">
-    <div class="quiz-header">
-      <button onclick="exitQuiz()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:50px;cursor:pointer;font-family:inherit;font-size:0.85rem">✕ Exit</button>
-      <div class="quiz-progress-wrap">
-        <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress" style="width:0%"></div></div>
-        <div class="quiz-num" id="quiz-num">Question 1 of 10</div>
+  <div class="section">
+    <div class="daily-card">
+      <div class="daily-icon">⚡</div>
+      <div class="daily-content">
+        <h3 id="daily-theme">Today's Daily Challenge</h3>
+        <p>A fresh mixed quiz every day — geography, space, flags & world records</p>
       </div>
-      <div class="quiz-timer" id="quiz-timer">20</div>
+      <div class="daily-cta"><button class="btn-primary" onclick="startDailyChallenge()">Start Now →</button></div>
     </div>
+    <div class="sec-eye">Quiz Topics</div>
+    <h2 class="sec-title">Choose your challenge</h2>
+    <p class="sec-sub">10 questions · 20 seconds each · Global leaderboard</p>
+    <div class="cats-grid" id="cats-grid"></div>
+  </div>
+</div>
 
-    <div class="quiz-category-label" id="quiz-cat-label">🌍 World Capitals</div>
+<!-- CONTINENTS -->
+<div class="screen" id="screen-continents">
+  <div class="section">
+    <div class="sec-eye">Continent Explorer</div>
+    <h2 class="sec-title">Name every country</h2>
+    <p class="sec-sub">Select a continent and name as many countries as you can before time runs out</p>
+    <div class="continents-grid" id="conts-grid"></div>
+  </div>
+</div>
 
-    <div class="question-card">
-      <div class="question-text" id="question-text">Loading question...</div>
+<!-- CONTINENT QUIZ -->
+<div class="screen" id="screen-continent">
+  <div class="cq-wrap">
+    <div class="cq-header">
+      <span class="cq-big-emoji" id="cq-emoji">🌍</span>
+      <h2 id="cq-title">Africa</h2>
+      <p id="cq-sub">Name all countries</p>
     </div>
-
-    <div class="fun-fact" id="fun-fact">
-      <span class="fun-fact-icon">💡</span>
-      <span id="fun-fact-text"></span>
+    <div class="cq-timer-big" id="cq-timer">5:00</div>
+    <div class="cq-timer-lbl">Time Remaining</div>
+    <div class="cq-box">
+      <div class="cq-prog-info">
+        <span>Countries found</span>
+        <strong id="cq-count">0 / 0</strong>
+      </div>
+      <div class="cq-bar"><div class="cq-bar-fill" id="cq-bar" style="width:0%"></div></div>
+      <div class="cq-input-row">
+        <input type="text" class="cq-input" id="cq-input" placeholder="Type a country name and press Enter..." autocomplete="off" onkeydown="if(event.key==='Enter')submitCountry()">
+        <button class="btn-enter" onclick="submitCountry()">Enter</button>
+      </div>
+      <div class="found-tags" id="found-tags"></div>
     </div>
-
-    <div class="options-grid" id="options-grid"></div>
-
-    <div style="text-align:center;margin-top:20px">
-      <button class="btn-primary" id="next-btn" style="display:none" onclick="nextQuestion()">Next Question →</button>
+    <div class="cq-actions">
+      <button class="btn-hint" onclick="giveHint()">💡 Hint (−50pts)</button>
+      <button class="btn-giveup" onclick="giveUp()">🏳️ Give Up</button>
+      <button class="btn-ghost" onclick="showScreen('continents')" style="padding:12px 24px;font-size:0.875rem">← Back</button>
+    </div>
+    <div class="missed-box" id="missed-box">
+      <div class="missed-title">Countries you missed</div>
+      <div class="missed-tags" id="missed-tags"></div>
     </div>
   </div>
 </div>
 
-<!-- RESULTS SCREEN -->
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <div class="q-wrap">
+    <div class="q-top">
+      <button onclick="exitQuiz()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:50px;cursor:pointer;font-family:inherit;font-size:0.8rem;white-space:nowrap">✕ Exit</button>
+      <div class="q-prog-w">
+        <div class="q-bar"><div class="q-bar-fill" id="q-prog" style="width:0%"></div></div>
+        <div class="q-num" id="q-num">Question 1 of 10</div>
+      </div>
+      <div class="q-timer" id="q-timer">20</div>
+    </div>
+    <div class="q-cat" id="q-cat">🌍 World Capitals</div>
+    <div class="q-box"><div class="q-text" id="q-text">Loading...</div></div>
+    <div class="fact-box" id="fact-box">
+      <span class="fact-icon">💡</span>
+      <span class="fact-text" id="fact-text"></span>
+    </div>
+    <div class="opts-grid" id="opts-grid"></div>
+    <div style="text-align:center;margin-top:20px">
+      <button class="btn-primary" id="next-btn" style="display:none" onclick="nextQ()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
 <div class="screen" id="screen-results">
-  <div class="results-container">
-    <div class="results-score-ring">
-      <svg viewBox="0 0 180 180" width="180" height="180">
-        <circle cx="90" cy="90" r="75" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
-        <circle cx="90" cy="90" r="75" fill="none" stroke="url(#scoreGrad)" stroke-width="12"
-          stroke-linecap="round" stroke-dasharray="471" id="score-circle" stroke-dashoffset="471"/>
-        <defs>
-          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#00b4a6"/>
-            <stop offset="100%" stop-color="#f5c842"/>
-          </linearGradient>
-        </defs>
+  <div class="res-wrap">
+    <div class="score-ring">
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle cx="100" cy="100" r="84" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12"/>
+        <circle cx="100" cy="100" r="84" fill="none" stroke="url(#rg)" stroke-width="12" stroke-linecap="round" stroke-dasharray="528" stroke-dashoffset="528" id="score-arc"/>
+        <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00d4c8"/><stop offset="100%" stop-color="#ffd166"/></linearGradient></defs>
       </svg>
       <div class="score-center">
-        <div class="score-num" id="result-score">0</div>
-        <div class="score-label">points</div>
+        <div class="score-big" id="res-pts">0</div>
+        <div class="score-lbl">points</div>
       </div>
     </div>
-
-    <h2 class="results-title" id="result-title">Great work!</h2>
-    <p class="results-subtitle" id="result-subtitle">You answered 7 out of 10 correctly</p>
-
-    <div class="results-stats">
-      <div class="result-stat">
-        <span class="result-stat-num" id="res-correct">0</span>
-        <div class="result-stat-label">Correct ✓</div>
-      </div>
-      <div class="result-stat">
-        <span class="result-stat-num" id="res-wrong">0</span>
-        <div class="result-stat-label">Wrong ✗</div>
-      </div>
-      <div class="result-stat">
-        <span class="result-stat-num" id="res-time">0s</span>
-        <div class="result-stat-label">Avg Time</div>
-      </div>
+    <h2 class="res-title" id="res-title">Well done!</h2>
+    <p class="res-sub" id="res-sub"></p>
+    <div class="res-cards">
+      <div class="res-card"><span class="res-card-val" id="res-correct">0</span><div class="res-card-lbl">Correct ✓</div></div>
+      <div class="res-card"><span class="res-card-val" id="res-wrong">0</span><div class="res-card-lbl">Wrong ✗</div></div>
+      <div class="res-card"><span class="res-card-val" id="res-avg">0s</span><div class="res-card-lbl">Avg Speed</div></div>
     </div>
-
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <div class="res-actions">
       <button class="btn-primary" onclick="playAgain()">Play Again</button>
-      <button class="btn-secondary" onclick="showScreen('leaderboard')">🏆 Leaderboard</button>
-      <button class="btn-secondary" onclick="showScreen('home')">← Back</button>
+      <button class="btn-ghost" onclick="showScreen('leaderboard')">🏆 Leaderboard</button>
+      <button class="btn-ghost" onclick="showScreen('home')">← Home</button>
     </div>
   </div>
 </div>
 
-<!-- LEADERBOARD SCREEN -->
+<!-- LEADERBOARD -->
 <div class="screen" id="screen-leaderboard">
-  <div class="lb-container">
-    <h2 class="section-title" style="margin-top:0">🏆 Global Leaderboard</h2>
-    <p class="section-sub">Top explorers this week</p>
-    <div id="leaderboard-content">
-      <div style="text-align:center;padding:40px"><div class="loading"></div></div>
-    </div>
+  <div class="lb-wrap">
+    <div class="sec-eye">Global Rankings</div>
+    <h2 class="sec-title" style="margin-bottom:8px">Hall of Fame</h2>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:32px">Top explorers from around the world</p>
+    <div class="lb-list" id="lb-list"><div style="text-align:center;padding:40px"><div class="spin"></div></div></div>
   </div>
 </div>
 
-<!-- DAILY SCREEN -->
-<div class="screen" id="screen-daily">
-  <div style="max-width:700px;margin:0 auto;padding:0 20px">
-    <h2 class="section-title" style="margin-top:0">⚡ Daily Challenge</h2>
-    <p class="section-sub" id="daily-date"></p>
-    <div class="daily-banner">
-      <div class="daily-icon">🗺️</div>
-      <div class="daily-text">
-        <h3 id="daily-theme">Today's Theme</h3>
-        <p id="daily-desc">A special mixed quiz featuring today's geographic theme</p>
-      </div>
-      <button class="daily-btn" onclick="startDailyChallenge()">Start Now</button>
-    </div>
-    <div id="daily-scores">
-      <h3 style="font-family:'Fraunces',serif;margin-bottom:16px">Today's Top Scores</h3>
-      <div id="daily-lb"></div>
-    </div>
-  </div>
-</div>
-
-<!-- LOGIN MODAL -->
+<!-- MODAL -->
 <div class="modal-overlay" id="login-modal">
   <div class="modal">
     <h2>Join GeoQuest 🌍</h2>
-    <p>Create your profile to track scores and compete on the leaderboard</p>
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="input-username" placeholder="e.g. geo_sarah" />
-    </div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="input-email" placeholder="your@email.com" />
-    </div>
-    <div class="form-group">
-      <label>Your Country</label>
-      <select id="input-country">
-        <option value="">Select country...</option>
+    <p>Create your explorer profile and compete on the global leaderboard</p>
+    <div class="form-field"><label>Username</label><input type="text" id="inp-user" placeholder="e.g. geo_sarah"/></div>
+    <div class="form-field"><label>Email (optional)</label><input type="email" id="inp-email" placeholder="sarah@example.com"/></div>
+    <div class="form-field"><label>Your Country</label>
+      <select id="inp-country">
+        <option value="">Select...</option>
         <option value="IS">🇮🇸 Iceland</option>
+        <option value="CH">🇨🇭 Switzerland</option>
         <option value="US">🇺🇸 United States</option>
         <option value="GB">🇬🇧 United Kingdom</option>
         <option value="NO">🇳🇴 Norway</option>
@@ -1067,501 +420,450 @@
         <option value="FI">🇫🇮 Finland</option>
         <option value="DE">🇩🇪 Germany</option>
         <option value="FR">🇫🇷 France</option>
+        <option value="IT">🇮🇹 Italy</option>
+        <option value="AT">🇦🇹 Austria</option>
         <option value="Other">🌍 Other</option>
       </select>
     </div>
-    <div class="modal-actions">
-      <button class="btn-full btn-teal" onclick="createPlayer()">Create Profile</button>
-      <button class="btn-full btn-ghost" onclick="closeModal()">Maybe later</button>
+    <div class="modal-btns">
+      <button class="btn-modal-p" onclick="createPlayer()">Create Profile 🚀</button>
+      <button class="btn-modal-g" onclick="closeModal()">Maybe later</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// =============================================
-// SUPABASE CONFIG
-// =============================================
-const SUPABASE_URL = 'https://mjphpctvuxmbjhmcscoj.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qcGhwY3R2dXhtYmpobWNzY29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMjgzMzQsImV4cCI6MjA4NzgwNDMzNH0.dsmzK7SS4_RSC5wbN6ifhjRlOSbfDZjIcfh2MKkDQIs';
+// ── 3D GLOBE ──
+(function(){
+  const canvas = document.getElementById('globe-canvas');
+  const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,1000);
+  camera.position.z = 2.8;
+  const globe = new THREE.Mesh(new THREE.SphereGeometry(1,64,64), new THREE.MeshPhongMaterial({color:0x0a1628,emissive:0x061020,specular:0x00d4c8,shininess:15,transparent:true,opacity:0.9}));
+  scene.add(globe);
+  const wire = new THREE.Mesh(new THREE.SphereGeometry(1.001,32,32), new THREE.MeshBasicMaterial({color:0x00d4c8,wireframe:true,transparent:true,opacity:0.05}));
+  scene.add(wire);
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.18,64,64), new THREE.MeshPhongMaterial({color:0x0066aa,transparent:true,opacity:0.07,side:THREE.BackSide})));
+  const dpos=[]; for(let i=0;i<600;i++){const phi=Math.acos(-1+2*Math.random()),th=Math.random()*2*Math.PI,r=1.015;dpos.push(r*Math.sin(phi)*Math.cos(th),r*Math.sin(phi)*Math.sin(th),r*Math.cos(phi));}
+  const dg=new THREE.BufferGeometry(); dg.setAttribute('position',new THREE.Float32BufferAttribute(dpos,3));
+  scene.add(new THREE.Points(dg,new THREE.PointsMaterial({color:0x00d4c8,size:0.012,transparent:true,opacity:0.45})));
+  const sp=[]; for(let i=0;i<2000;i++){sp.push((Math.random()-.5)*100,(Math.random()-.5)*100,(Math.random()-.5)*100);}
+  const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
+  scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.05,transparent:true,opacity:0.55})));
+  const al=new THREE.AmbientLight(0x112244,1.5); scene.add(al);
+  const dl=new THREE.DirectionalLight(0x00d4c8,1.2); dl.position.set(5,3,5); scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0xffd166,0.4); dl2.position.set(-5,-3,-2); scene.add(dl2);
+  let t=0;
+  (function animate(){requestAnimationFrame(animate);t+=0.003;globe.rotation.y+=0.0012;wire.rotation.y+=0.0012;globe.rotation.x=Math.sin(t*.3)*.05;renderer.render(scene,camera);})();
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+})();
 
-const db = {
-  async get(table, filters = '') {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filters}&order=created_at.desc`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    return res.json();
-  },
-  async post(table, data) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-      method: 'POST',
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  async patch(table, id, data) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-      method: 'PATCH',
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  }
+// ── SUPABASE ──
+const SB='https://mjphpctvuxmbjhmcscoj.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qcGhwY3R2dXhtYmpobWNzY29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMjgzMzQsImV4cCI6MjA4NzgwNDMzNH0.dsmzK7SS4_RSC5wbN6ifhjRlOSbfDZjIcfh2MKkDQIs';
+const H={apikey:SK,Authorization:`Bearer ${SK}`,'Content-Type':'application/json'};
+const db={
+  get:async(t,q='')=>(await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H})).json(),
+  post:async(t,d)=>(await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json(),
+  patch:async(t,id,d)=>(await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json(),
 };
 
-// =============================================
-// QUESTIONS DATABASE (Built-in - no API needed)
-// =============================================
-const QUESTIONS = {
-  capitals: [
-    { q: "What is the capital of Iceland?", a: "b", opts: ["Copenhagen","Reykjavik","Helsinki","Oslo"], fact: "Reykjavik is the world's northernmost capital city of a sovereign state!" },
-    { q: "What is the capital of Australia?", a: "c", opts: ["Sydney","Melbourne","Canberra","Brisbane"], fact: "Many think Sydney is the capital, but Canberra was purpose-built as a compromise between Sydney and Melbourne!" },
-    { q: "What is the capital of Brazil?", a: "a", opts: ["Brasília","Rio de Janeiro","São Paulo","Salvador"], fact: "Brasília was built from scratch in just 41 months and became the capital in 1960!" },
-    { q: "What is the capital of Canada?", a: "b", opts: ["Toronto","Ottawa","Montreal","Vancouver"], fact: "Ottawa was chosen as capital in 1857 by Queen Victoria — partly because it was harder to attack than other cities!" },
-    { q: "What is the capital of South Africa?", a: "d", opts: ["Johannesburg","Durban","Cape Town","Pretoria"], fact: "South Africa actually has three capitals — Pretoria (executive), Cape Town (legislative), Bloemfontein (judicial)!" },
-    { q: "What is the capital of New Zealand?", a: "b", opts: ["Auckland","Wellington","Christchurch","Dunedin"], fact: "Wellington is the southernmost capital city in the world!" },
-    { q: "What is the capital of Kazakhstan?", a: "a", opts: ["Astana","Almaty","Shymkent","Karaganda"], fact: "Astana has been renamed multiple times — it was called Nur-Sultan from 2019–2022!" },
-    { q: "What is the capital of Myanmar?", a: "c", opts: ["Yangon","Mandalay","Naypyidaw","Bago"], fact: "Myanmar moved its capital from Yangon to Naypyidaw in 2006, reportedly overnight without public announcement!" },
-    { q: "What is the capital of Bolivia?", a: "b", opts: ["La Paz","Sucre","Santa Cruz","Cochabamba"], fact: "Bolivia has two capitals! Sucre is the constitutional capital, but La Paz is the seat of government!" },
-    { q: "What is the capital of Sri Lanka?", a: "a", opts: ["Sri Jayawardenepura Kotte","Colombo","Kandy","Galle"], fact: "Sri Jayawardenepura Kotte is one of the longest capital city names in the world!" },
-    { q: "What is the capital of Mongolia?", a: "d", opts: ["Darkhan","Erdenet","Choibalsan","Ulaanbaatar"], fact: "Ulaanbaatar means 'Red Hero' in Mongolian and is the coldest capital city in the world!" },
-    { q: "What is the capital of Bhutan?", a: "b", opts: ["Paro","Thimphu","Punakha","Wangdue Phodrang"], fact: "Thimphu is one of the few capitals in the world with no traffic lights — police direct traffic instead!" },
+// ── QUESTIONS ──
+const Q={
+  capitals:[
+    {q:"Capital of Iceland?",a:"b",o:["Copenhagen","Reykjavik","Helsinki","Oslo"],f:"Reykjavik is the world's northernmost capital city!"},
+    {q:"Capital of Australia?",a:"c",o:["Sydney","Melbourne","Canberra","Brisbane"],f:"Canberra was purpose-built as a compromise between Sydney & Melbourne!"},
+    {q:"Capital of Brazil?",a:"a",o:["Brasília","Rio de Janeiro","São Paulo","Salvador"],f:"Brasília was built in just 41 months, becoming capital in 1960!"},
+    {q:"Capital of Canada?",a:"b",o:["Toronto","Ottawa","Montreal","Vancouver"],f:"Ottawa was chosen partly because it was harder to attack!"},
+    {q:"Capital of South Africa?",a:"d",o:["Johannesburg","Durban","Cape Town","Pretoria"],f:"South Africa has THREE capitals — executive, legislative and judicial!"},
+    {q:"Capital of New Zealand?",a:"b",o:["Auckland","Wellington","Christchurch","Dunedin"],f:"Wellington is the southernmost national capital in the world!"},
+    {q:"Capital of Kazakhstan?",a:"a",o:["Astana","Almaty","Shymkent","Karaganda"],f:"Astana was renamed Nur-Sultan 2019–2022, then back to Astana!"},
+    {q:"Capital of Myanmar?",a:"c",o:["Yangon","Mandalay","Naypyidaw","Bago"],f:"Myanmar moved its capital overnight in 2006 without public announcement!"},
+    {q:"Capital of Bolivia?",a:"b",o:["La Paz","Sucre","Santa Cruz","Cochabamba"],f:"Bolivia has TWO capitals — Sucre is constitutional, La Paz is government!"},
+    {q:"Capital of Mongolia?",a:"d",o:["Darkhan","Erdenet","Choibalsan","Ulaanbaatar"],f:"Ulaanbaatar means 'Red Hero' and is the coldest capital in the world!"},
+    {q:"Capital of Bhutan?",a:"b",o:["Paro","Thimphu","Punakha","Wangdue"],f:"Thimphu has no traffic lights — police direct traffic by hand!"},
+    {q:"Capital of Kenya?",a:"a",o:["Nairobi","Mombasa","Kisumu","Nakuru"],f:"Nairobi has a national park within city limits — the only capital to do so!"},
+    {q:"Capital of Peru?",a:"c",o:["Cusco","Arequipa","Lima","Trujillo"],f:"Lima is home to over 10 million people — a third of Peru's population!"},
+    {q:"Capital of Thailand?",a:"b",o:["Chiang Mai","Bangkok","Phuket","Pattaya"],f:"Bangkok's official Thai name is 169 characters — world's longest city name!"},
+    {q:"Capital of Nigeria?",a:"d",o:["Lagos","Kano","Ibadan","Abuja"],f:"Nigeria moved its capital from Lagos to Abuja in 1991!"},
+    {q:"Capital of Argentina?",a:"a",o:["Buenos Aires","Córdoba","Rosario","Mendoza"],f:"Buenos Aires means 'Fair Winds' in Spanish!"},
+    {q:"Capital of Egypt?",a:"b",o:["Alexandria","Cairo","Luxor","Giza"],f:"Cairo is the largest city in Africa and the Arab world!"},
+    {q:"Capital of Japan?",a:"c",o:["Osaka","Kyoto","Tokyo","Hiroshima"],f:"Tokyo is the world's most populous metropolitan area with 37 million people!"},
+    {q:"Capital of Indonesia?",a:"d",o:["Bali","Surabaya","Bandung","Jakarta"],f:"Indonesia is building a new capital called Nusantara to replace Jakarta!"},
+    {q:"Capital of Pakistan?",a:"b",o:["Lahore","Islamabad","Karachi","Peshawar"],f:"Islamabad replaced Karachi as the capital in 1966 — purpose-built like Brasília!"},
   ],
-  geography: [
-    { q: "Which country has the most time zones?", a: "a", opts: ["France","Russia","USA","China"], fact: "France has 12 time zones due to its overseas territories — more than any other country!" },
-    { q: "What is the world's largest country by area?", a: "c", opts: ["Canada","China","Russia","USA"], fact: "Russia covers about 11% of Earth's entire land mass — it spans 11 time zones!" },
-    { q: "Which is the world's smallest country?", a: "b", opts: ["Monaco","Vatican City","San Marino","Liechtenstein"], fact: "Vatican City covers just 0.44 km² — smaller than most city parks!" },
-    { q: "What percentage of Earth's surface is water?", a: "a", opts: ["71%","61%","81%","51%"], fact: "Despite being called 'Earth', about 71% of our planet is covered by oceans!" },
-    { q: "Which country has the most natural lakes?", a: "d", opts: ["Russia","USA","Finland","Canada"], fact: "Canada has about 879,800 lakes — more than all other countries combined!" },
-    { q: "What is the world's longest river?", a: "b", opts: ["Amazon","Nile","Yangtze","Mississippi"], fact: "While the Nile is traditionally considered longest, some geographers now argue the Amazon might be longer!" },
-    { q: "Which country has the longest coastline?", a: "a", opts: ["Canada","Norway","Russia","Indonesia"], fact: "Canada's coastline stretches 202,080 km — long enough to circle Earth 5 times!" },
-    { q: "What is the deepest lake in the world?", a: "c", opts: ["Lake Superior","Lake Tanganyika","Lake Baikal","Crater Lake"], fact: "Lake Baikal in Russia is 1,642m deep and contains about 20% of all unfrozen fresh water on Earth!" },
-    { q: "Which continent has the most countries?", a: "b", opts: ["Asia","Africa","Europe","Americas"], fact: "Africa has 54 recognized countries — more than any other continent!" },
-    { q: "What is the world's highest mountain range?", a: "a", opts: ["Himalayas","Andes","Alps","Rockies"], fact: "The Himalayas contain all 14 of the world's mountains over 8,000 meters!" },
-    { q: "Which country is both in Europe and Asia?", a: "d", opts: ["Georgia","Armenia","Azerbaijan","Russia"], fact: "Russia, Turkey, Kazakhstan, and others straddle both continents — but Russia is the largest transcontinental nation!" },
-    { q: "What is the world's largest desert?", a: "b", opts: ["Sahara","Antarctica","Arabian","Gobi"], fact: "Antarctica is actually the world's largest desert! Deserts are defined by low precipitation, not heat." },
+  geography:[
+    {q:"Which country has the most time zones?",a:"a",o:["France","Russia","USA","China"],f:"France has 12 time zones due to its overseas territories!"},
+    {q:"World's largest country by area?",a:"c",o:["Canada","China","Russia","USA"],f:"Russia covers ~11% of Earth's entire land mass across 11 time zones!"},
+    {q:"World's smallest country?",a:"b",o:["Monaco","Vatican City","San Marino","Liechtenstein"],f:"Vatican City covers just 0.44 km² — smaller than most city parks!"},
+    {q:"What % of Earth's surface is water?",a:"a",o:["71%","61%","81%","51%"],f:"Despite being called 'Earth', 71% of our planet is covered by oceans!"},
+    {q:"Which country has the most natural lakes?",a:"d",o:["Russia","USA","Finland","Canada"],f:"Canada has ~879,800 lakes — more than all other countries combined!"},
+    {q:"World's longest river?",a:"b",o:["Amazon","Nile","Yangtze","Mississippi"],f:"The Nile vs Amazon debate continues — some say Amazon might be longer!"},
+    {q:"Which country has the longest coastline?",a:"a",o:["Canada","Norway","Russia","Indonesia"],f:"Canada's coastline is 202,080 km — enough to circle Earth 5 times!"},
+    {q:"World's deepest lake?",a:"c",o:["Lake Superior","Tanganyika","Lake Baikal","Crater Lake"],f:"Lake Baikal is 1,642m deep and holds ~20% of all unfrozen fresh water!"},
+    {q:"Which continent has the most countries?",a:"b",o:["Asia","Africa","Europe","Americas"],f:"Africa has 54 recognized countries — more than any other continent!"},
+    {q:"World's largest desert?",a:"b",o:["Sahara","Antarctica","Arabian","Gobi"],f:"Antarctica IS a desert! Deserts are defined by low precipitation, not heat!"},
+    {q:"Highest mountain range in the world?",a:"a",o:["Himalayas","Andes","Alps","Rockies"],f:"The Himalayas contain all 14 mountains over 8,000 metres on Earth!"},
+    {q:"Which country has the highest average elevation?",a:"c",o:["Nepal","Peru","Bhutan","Afghanistan"],f:"Bhutan averages 3,280m elevation — even its lowest valley is over 1,000m!"},
+    {q:"World's largest ocean?",a:"a",o:["Pacific","Atlantic","Indian","Arctic"],f:"The Pacific covers more area than ALL of Earth's landmasses combined!"},
+    {q:"Which river flows through the most countries?",a:"d",o:["Amazon","Nile","Mississippi","Danube"],f:"The Danube flows through 10 countries — more than any other river in the world!"},
   ],
-  solar: [
-    { q: "How many planets are in our solar system?", a: "c", opts: ["7","9","8","10"], fact: "Pluto was reclassified as a dwarf planet in 2006, leaving us with 8 official planets!" },
-    { q: "Which planet has the most moons?", a: "a", opts: ["Saturn","Jupiter","Uranus","Neptune"], fact: "Saturn has 146 confirmed moons as of 2023 — more than any other planet!" },
-    { q: "How long does light take to travel from the Sun to Earth?", a: "b", opts: ["1 minute","8 minutes","30 minutes","1 hour"], fact: "Light travels at 299,792 km/s, but it still takes about 8 minutes 20 seconds to reach Earth!" },
-    { q: "Which planet rotates on its side?", a: "d", opts: ["Neptune","Saturn","Mars","Uranus"], fact: "Uranus has an axial tilt of 98 degrees — scientists think a massive collision knocked it over billions of years ago!" },
-    { q: "What is the hottest planet in our solar system?", a: "b", opts: ["Mercury","Venus","Mars","Jupiter"], fact: "Venus is hotter than Mercury despite being further from the Sun — its thick atmosphere traps heat like a greenhouse!" },
-    { q: "How old is our solar system?", a: "c", opts: ["1 billion years","3 billion years","4.6 billion years","10 billion years"], fact: "Our solar system formed from a giant cloud of gas and dust about 4.6 billion years ago!" },
-    { q: "What is the Great Red Spot on Jupiter?", a: "a", opts: ["A storm","A volcano","A crater","A sea"], fact: "The Great Red Spot is a storm that has been raging for at least 350 years — it's wider than Earth!" },
-    { q: "Which planet has a day longer than its year?", a: "b", opts: ["Mercury","Venus","Mars","Jupiter"], fact: "Venus takes 243 Earth days to rotate once but only 225 days to orbit the Sun!" },
-    { q: "What is the Kuiper Belt?", a: "d", opts: ["A ring around Saturn","A meteor shower","The asteroid belt","Region beyond Neptune with icy objects"], fact: "The Kuiper Belt is home to Pluto and thousands of other icy bodies extending billions of km from the Sun!" },
-    { q: "How many Earth years does it take Neptune to orbit the Sun?", a: "c", opts: ["84 years","60 years","165 years","248 years"], fact: "Neptune has only completed one full orbit since it was discovered in 1846!" },
+  solar:[
+    {q:"How many planets in our solar system?",a:"c",o:["7","9","8","10"],f:"Pluto was reclassified as a dwarf planet in 2006, leaving 8 official planets!"},
+    {q:"Which planet has the most moons?",a:"a",o:["Saturn","Jupiter","Uranus","Neptune"],f:"Saturn has 146 confirmed moons as of 2023!"},
+    {q:"Light travel time from Sun to Earth?",a:"b",o:["1 minute","8 minutes","30 minutes","1 hour"],f:"Light travels at 299,792 km/s but still takes 8 min 20 sec to reach us!"},
+    {q:"Which planet rotates on its side?",a:"d",o:["Neptune","Saturn","Mars","Uranus"],f:"Uranus has a 98° axial tilt — a massive collision knocked it sideways!"},
+    {q:"Hottest planet in our solar system?",a:"b",o:["Mercury","Venus","Mars","Jupiter"],f:"Venus is hotter than Mercury — its thick atmosphere traps heat like a greenhouse!"},
+    {q:"How old is our solar system?",a:"c",o:["1 billion","3 billion","4.6 billion years","10 billion"],f:"Our solar system formed from a giant cloud of gas and dust 4.6 billion years ago!"},
+    {q:"What is Jupiter's Great Red Spot?",a:"a",o:["A storm","A volcano","A crater","A sea"],f:"The Great Red Spot has been raging for 350+ years and is wider than Earth!"},
+    {q:"Which planet has a day longer than its year?",a:"b",o:["Mercury","Venus","Mars","Jupiter"],f:"Venus takes 243 Earth days to rotate but only 225 days to orbit the Sun!"},
+    {q:"Neptune's orbital period around the Sun?",a:"c",o:["84 years","60 years","165 years","248 years"],f:"Neptune has completed only ONE orbit since it was discovered in 1846!"},
+    {q:"What is the Milky Way?",a:"d",o:["A star cluster","A nebula","A black hole","Our galaxy"],f:"The Milky Way contains 100–400 billion stars — our Sun is just one of them!"},
+    {q:"How many moons does Mars have?",a:"b",o:["0","2","4","1"],f:"Mars has two small moons — Phobos and Deimos — both likely captured asteroids!"},
+    {q:"What is the largest planet in our solar system?",a:"a",o:["Jupiter","Saturn","Uranus","Neptune"],f:"Jupiter is so large that all other planets could fit inside it with room to spare!"},
   ],
-  records: [
-    { q: "Which country has the world's longest land border?", a: "b", opts: ["USA","China","Russia","Brazil"], fact: "China shares borders with 14 countries — the most of any nation in the world!" },
-    { q: "What is the world's most spoken language by native speakers?", a: "a", opts: ["Mandarin Chinese","English","Spanish","Hindi"], fact: "Mandarin Chinese has about 920 million native speakers — nearly 12% of the world's population!" },
-    { q: "Which country has the highest average elevation?", a: "c", opts: ["Nepal","Peru","Bhutan","Afghanistan"], fact: "Bhutan has an average elevation of 3,280 meters — even its lowest valley sits at over 1,000 meters!" },
-    { q: "What is the world's most densely populated country?", a: "b", opts: ["Singapore","Monaco","Vatican City","Bangladesh"], fact: "Monaco packs about 19,000 people per km² into just 2 km² — the world's most densely populated sovereign state!" },
-    { q: "Which ocean is the largest?", a: "a", opts: ["Pacific","Atlantic","Indian","Arctic"], fact: "The Pacific Ocean covers more area than all of Earth's landmasses combined!" },
-    { q: "What is the world's most visited country?", a: "d", opts: ["USA","Spain","Italy","France"], fact: "France receives about 90 million international tourists per year — more than any other country!" },
-    { q: "Which country has the most official languages?", a: "b", opts: ["India","Zimbabwe","South Africa","Switzerland"], fact: "Zimbabwe has 16 official languages — the most of any country in the world!" },
-    { q: "What is the world's tallest waterfall?", a: "c", opts: ["Niagara Falls","Iguazu Falls","Angel Falls","Victoria Falls"], fact: "Angel Falls in Venezuela drops 979 meters — so high that water often evaporates before reaching the bottom!" },
-    { q: "Which country produces the most coffee?", a: "a", opts: ["Brazil","Colombia","Vietnam","Ethiopia"], fact: "Brazil produces about 37% of the world's coffee — it's been the world's largest producer for over 150 years!" },
-    { q: "What is the world's largest island?", a: "b", opts: ["Borneo","Greenland","New Guinea","Madagascar"], fact: "Greenland covers 2.16 million km² — though 80% of it is covered by an ice sheet!" },
+  records:[
+    {q:"Which country borders the most other countries?",a:"b",o:["USA","China","Russia","Brazil"],f:"China AND Russia both border 14 countries — joint record holders!"},
+    {q:"Most spoken language by native speakers?",a:"a",o:["Mandarin Chinese","English","Spanish","Hindi"],f:"Mandarin has ~920 million native speakers — ~12% of the world's population!"},
+    {q:"World's most densely populated country?",a:"b",o:["Singapore","Monaco","Vatican City","Bangladesh"],f:"Monaco packs ~19,000 people per km² into just 2 km² of land!"},
+    {q:"Most visited country in the world?",a:"d",o:["USA","Spain","Italy","France"],f:"France receives ~90 million international tourists per year!"},
+    {q:"Which country has the most official languages?",a:"b",o:["India","Zimbabwe","South Africa","Switzerland"],f:"Zimbabwe has 16 official languages — the most of any country!"},
+    {q:"World's tallest waterfall?",a:"c",o:["Niagara","Iguazu","Angel Falls","Victoria"],f:"Angel Falls in Venezuela drops 979m — water often evaporates before reaching the bottom!"},
+    {q:"Largest island in the world?",a:"b",o:["Borneo","Greenland","New Guinea","Madagascar"],f:"Greenland covers 2.16 million km² though 80% is covered by ice!"},
+    {q:"Country that produces the most coffee?",a:"a",o:["Brazil","Colombia","Vietnam","Ethiopia"],f:"Brazil produces ~37% of the world's coffee and has for over 150 years!"},
+    {q:"Which city has the most skyscrapers?",a:"d",o:["New York","Dubai","Shanghai","Hong Kong"],f:"Hong Kong has more buildings over 150m than any other city in the world!"},
+    {q:"Which country has the most UNESCO World Heritage Sites?",a:"c",o:["China","France","Italy","Spain"],f:"Italy leads with 58 UNESCO World Heritage Sites as of 2023!"},
   ],
-  flags: [
-    { q: "Which country's flag features a maple leaf?", a: "a", opts: ["Canada","Australia","New Zealand","Jamaica"], fact: "Canada adopted the maple leaf flag in 1965, replacing the old design that included the Union Jack!" },
-    { q: "Which is the only country with a non-rectangular flag?", a: "c", opts: ["Bangladesh","Switzerland","Nepal","Vatican City"], fact: "Nepal's flag is a double pennon (two triangular pennants stacked) — the only non-quadrilateral national flag!" },
-    { q: "Which country's flag has the most colors?", a: "b", opts: ["India","South Africa","Belize","Seychelles"], fact: "South Africa's flag has 6 colors — black, gold, green, white, red, and blue!" },
-    { q: "Which flag features a dragon?", a: "d", opts: ["China","Vietnam","South Korea","Bhutan"], fact: "Bhutan's flag shows a white dragon (Druk) on a half-orange, half-yellow background — Bhutan means 'Land of the Thunder Dragon'!" },
-    { q: "Which country has a star and crescent moon on its flag?", a: "a", opts: ["Turkey","Saudi Arabia","Iran","Egypt"], fact: "The crescent and star is associated with Islam, but Turkey adopted it from the Ottoman Empire's flag!" },
-    { q: "Whose flag has the Southern Cross constellation?", a: "c", opts: ["Argentina","Chile","Australia","Colombia"], fact: "Australia, New Zealand, Papua New Guinea, Samoa, and Brazil all feature the Southern Cross on their flags!" },
-    { q: "Which flag is completely red?", a: "b", opts: ["China","No country","Vietnam","Morocco"], fact: "No sovereign nation has a completely plain single-color flag in use today!" },
-    { q: "Which country's flag shows a cedar tree?", a: "d", opts: ["Jordan","Saudi Arabia","Syria","Lebanon"], fact: "The Cedar of Lebanon has been a national symbol for thousands of years — it appears in the Bible and ancient texts!" },
-    { q: "Which flag has the Union Jack in its corner?", a: "a", opts: ["Australia","South Africa","India","Kenya"], fact: "Australia, New Zealand, Fiji, and Tuvalu all feature the Union Jack, reflecting their British colonial history!" },
-    { q: "Which is the world's oldest unchanged national flag?", a: "b", opts: ["France","Denmark","Netherlands","Sweden"], fact: "Denmark's Dannebrog dates to 1370 — making it the world's oldest continuously used national flag!" },
+  flags:[
+    {q:"Which country's flag has a maple leaf?",a:"a",o:["Canada","Australia","New Zealand","Jamaica"],f:"Canada adopted the maple leaf flag in 1965, replacing the design with the Union Jack!"},
+    {q:"Only country with a non-rectangular flag?",a:"c",o:["Bangladesh","Switzerland","Nepal","Vatican City"],f:"Nepal's double pennon shape makes it the only non-quadrilateral national flag!"},
+    {q:"Which flag features a dragon?",a:"d",o:["China","Vietnam","South Korea","Bhutan"],f:"Bhutan's Druk (thunder dragon) flag — Bhutan means 'Land of the Thunder Dragon'!"},
+    {q:"World's oldest unchanged national flag?",a:"b",o:["France","Denmark","Netherlands","Sweden"],f:"Denmark's Dannebrog dates to 1370 — the world's oldest continuously used national flag!"},
+    {q:"Which flags are completely square?",a:"d",o:["USA & Canada","France & Italy","Germany & Austria","Switzerland & Vatican City"],f:"Switzerland and Vatican City are the only two countries with perfectly square flags!"},
+    {q:"Which country's flag has a cedar tree?",a:"c",o:["Jordan","Saudi Arabia","Lebanon","Syria"],f:"The Cedar of Lebanon has been a national symbol for thousands of years!"},
+    {q:"Which flag has the Southern Cross constellation?",a:"a",o:["Australia","Argentina","Colombia","Chile"],f:"Australia, NZ, Papua New Guinea, Samoa & Brazil all feature the Southern Cross!"},
+    {q:"Which country's flag is red with a yellow star?",a:"b",o:["Vietnam","China","North Korea","Laos"],f:"China's flag has one large and four small stars — the large one represents the Communist Party!"},
   ],
-  oceans: [
-    { q: "How many oceans are there?", a: "c", opts: ["4","3","5","6"], fact: "The Southern Ocean was officially recognized as the 5th ocean by National Geographic in 2021!" },
-    { q: "What percentage of marine species live in the Pacific Ocean?", a: "b", opts: ["20%","75%","50%","40%"], fact: "The Pacific is home to the Mariana Trench — the deepest point on Earth at nearly 11km down!" },
-    { q: "Which ocean is saltiest?", a: "a", opts: ["Atlantic","Pacific","Indian","Arctic"], fact: "The Atlantic has higher salt content due to more evaporation and fewer rivers flowing into it!" },
-    { q: "What is the Great Barrier Reef?", a: "d", opts: ["A mountain range","A river delta","An island chain","World's largest coral reef system"], fact: "The Great Barrier Reef is visible from space and is the world's largest living structure!" },
-    { q: "Which ocean current keeps Europe warm?", a: "b", opts: ["California Current","Gulf Stream","Kuroshio Current","Humboldt Current"], fact: "The Gulf Stream brings warm water from the Gulf of Mexico to Europe, keeping cities like London warmer than expected!" },
-    { q: "What covers most of the ocean floor?", a: "c", opts: ["Sand","Rock","Sediment","Coral"], fact: "About 66% of the ocean floor is covered in a soft ooze made of tiny shells of dead organisms!" },
-    { q: "Which sea has no coastline?", a: "a", opts: ["Sargasso Sea","Dead Sea","Red Sea","Arabian Sea"], fact: "The Sargasso Sea is unique — it's defined entirely by ocean currents, not coastlines!" },
-    { q: "What is the average depth of the world's oceans?", a: "d", opts: ["1,200m","1,800m","2,500m","3,688m"], fact: "If you spread all the water in Earth's oceans over the planet's surface, it would be 2.7km deep everywhere!" },
+  oceans:[
+    {q:"How many oceans are officially recognised?",a:"c",o:["4","3","5","6"],f:"The Southern Ocean was officially recognised as the 5th ocean by National Geographic in 2021!"},
+    {q:"Which ocean is the saltiest?",a:"a",o:["Atlantic","Pacific","Indian","Arctic"],f:"The Atlantic has higher salt content due to more evaporation and fewer rivers!"},
+    {q:"What is the Great Barrier Reef?",a:"d",o:["A mountain range","A river delta","An island chain","World's largest coral reef"],f:"The Great Barrier Reef is visible from space and is Earth's largest living structure!"},
+    {q:"Which ocean current keeps Europe warm?",a:"b",o:["California Current","Gulf Stream","Kuroshio","Humboldt"],f:"The Gulf Stream brings warm water from the Gulf of Mexico all the way to Europe!"},
+    {q:"Which sea has no coastline?",a:"a",o:["Sargasso Sea","Dead Sea","Red Sea","Arabian Sea"],f:"The Sargasso Sea is unique — defined entirely by ocean currents, not coastlines!"},
+    {q:"Average depth of the world's oceans?",a:"d",o:["1,200m","1,800m","2,500m","3,688m"],f:"If ocean water was spread evenly over Earth, it would be 2.7km deep everywhere!"},
+    {q:"Which is the smallest ocean?",a:"c",o:["Indian","Southern","Arctic","Atlantic"],f:"The Arctic Ocean covers ~14 million km² — about 1.5 times the size of the USA!"},
   ]
 };
 
-// =============================================
-// APP STATE
-// =============================================
-let currentPlayer = JSON.parse(localStorage.getItem('geoquest_player') || 'null');
-let currentQuiz = { questions: [], current: 0, score: 0, correct: 0, categoryId: null, categoryName: '', startTime: null, questionTimes: [] };
-let timerInterval = null;
-let timeLeft = 20;
-let lastCategory = null;
-
-// =============================================
-// CATEGORIES CONFIG
-// =============================================
-const CATEGORIES = [
-  { id: 'capitals', name: 'World Capitals', icon: '🏛️', desc: 'From Reykjavik to Naypyidaw', color: '#00b4a6', count: QUESTIONS.capitals.length },
-  { id: 'geography', name: 'Geography Facts', icon: '🌍', desc: 'Mountains, borders, extreme facts', color: '#f5c842', count: QUESTIONS.geography.length },
-  { id: 'solar', name: 'Solar System', icon: '🪐', desc: 'Planets, moons and cosmic wonders', color: '#a78bfa', count: QUESTIONS.solar.length },
-  { id: 'records', name: 'World Records', icon: '🏆', desc: 'Biggest, smallest, most extreme', color: '#f97316', count: QUESTIONS.records.length },
-  { id: 'flags', name: 'Country Flags', icon: '🚩', desc: 'Test your vexillology knowledge', color: '#ec4899', count: QUESTIONS.flags.length },
-  { id: 'oceans', name: 'Oceans & Seas', icon: '🌊', desc: 'The blue parts of our world', color: '#3b82f6', count: QUESTIONS.oceans.length },
+// ── CONTINENTS DATA ──
+const CONTS=[
+  {id:'africa',name:'Africa',emoji:'🌍',color:'#f97316',desc:'54 countries · 5 minutes',time:300,
+   countries:['Algeria','Angola','Benin','Botswana','Burkina Faso','Burundi','Cabo Verde','Cameroon','Central African Republic','Chad','Comoros','Democratic Republic of Congo','Republic of Congo','Djibouti','Egypt','Equatorial Guinea','Eritrea','Eswatini','Ethiopia','Gabon','Gambia','Ghana','Guinea','Guinea-Bissau','Ivory Coast','Kenya','Lesotho','Liberia','Libya','Madagascar','Malawi','Mali','Mauritania','Mauritius','Morocco','Mozambique','Namibia','Niger','Nigeria','Rwanda','Sao Tome and Principe','Senegal','Seychelles','Sierra Leone','Somalia','South Africa','South Sudan','Sudan','Tanzania','Togo','Tunisia','Uganda','Zambia','Zimbabwe']},
+  {id:'europe',name:'Europe',emoji:'🇪🇺',color:'#3b82f6',desc:'44 countries · 4 minutes',time:240,
+   countries:['Albania','Andorra','Austria','Belarus','Belgium','Bosnia and Herzegovina','Bulgaria','Croatia','Cyprus','Czech Republic','Denmark','Estonia','Finland','France','Germany','Greece','Hungary','Iceland','Ireland','Italy','Kosovo','Latvia','Liechtenstein','Lithuania','Luxembourg','Malta','Moldova','Monaco','Montenegro','Netherlands','North Macedonia','Norway','Poland','Portugal','Romania','Russia','San Marino','Serbia','Slovakia','Slovenia','Spain','Sweden','Switzerland','Ukraine','United Kingdom','Vatican City']},
+  {id:'asia',name:'Asia',emoji:'🌏',color:'#a78bfa',desc:'48 countries · 5 minutes',time:300,
+   countries:['Afghanistan','Armenia','Azerbaijan','Bahrain','Bangladesh','Bhutan','Brunei','Cambodia','China','Cyprus','Georgia','India','Indonesia','Iran','Iraq','Israel','Japan','Jordan','Kazakhstan','Kuwait','Kyrgyzstan','Laos','Lebanon','Malaysia','Maldives','Mongolia','Myanmar','Nepal','North Korea','Oman','Pakistan','Palestine','Philippines','Qatar','Saudi Arabia','Singapore','South Korea','Sri Lanka','Syria','Taiwan','Tajikistan','Thailand','Timor-Leste','Turkey','Turkmenistan','United Arab Emirates','Uzbekistan','Vietnam','Yemen']},
+  {id:'americas',name:'Americas',emoji:'🌎',color:'#06ffa5',desc:'35 countries · 4 minutes',time:240,
+   countries:['Antigua and Barbuda','Argentina','Bahamas','Barbados','Belize','Bolivia','Brazil','Canada','Chile','Colombia','Costa Rica','Cuba','Dominica','Dominican Republic','Ecuador','El Salvador','Grenada','Guatemala','Guyana','Haiti','Honduras','Jamaica','Mexico','Nicaragua','Panama','Paraguay','Peru','Saint Kitts and Nevis','Saint Lucia','Saint Vincent and the Grenadines','Suriname','Trinidad and Tobago','United States','Uruguay','Venezuela']},
+  {id:'oceania',name:'Oceania',emoji:'🏝️',color:'#ffd166',desc:'14 countries · 3 minutes',time:180,
+   countries:['Australia','Fiji','Kiribati','Marshall Islands','Micronesia','Nauru','New Zealand','Palau','Papua New Guinea','Samoa','Solomon Islands','Tonga','Tuvalu','Vanuatu']},
+  {id:'middleeast',name:'Middle East',emoji:'🕌',color:'#ff6b6b',desc:'18 countries · 3 minutes',time:180,
+   countries:['Bahrain','Egypt','Iran','Iraq','Israel','Jordan','Kuwait','Lebanon','Libya','Oman','Palestine','Qatar','Saudi Arabia','Syria','Turkey','United Arab Emirates','Yemen','Cyprus']},
 ];
 
-// =============================================
-// INIT
-// =============================================
-window.addEventListener('load', () => {
-  renderCategories();
-  if (currentPlayer) updateAuthUI();
-  loadStats();
-  loadLeaderboard();
-  setupDailyScreen();
+const CATS_LIST=[
+  {id:'capitals',name:'World Capitals',icon:'🏛️',color:'#00d4c8'},
+  {id:'geography',name:'Geography Facts',icon:'🌍',color:'#ffd166'},
+  {id:'solar',name:'Solar System',icon:'🪐',color:'#a78bfa'},
+  {id:'records',name:'World Records',icon:'🏆',color:'#f97316'},
+  {id:'flags',name:'Country Flags',icon:'🚩',color:'#ec4899'},
+  {id:'oceans',name:'Oceans & Seas',icon:'🌊',color:'#3b82f6'},
+];
+
+// ── STATE ──
+let player=JSON.parse(localStorage.getItem('gqp')||'null');
+let quiz={}, cq={}, cqInt=null, qInt=null, lastCat=null;
+
+// ── INIT ──
+window.addEventListener('load',()=>{
+  renderCats(); renderConts(); setupDaily();
+  if(player) updateAuthUI();
+  loadStats(); loadLeaderboard();
 });
 
-function renderCategories() {
-  const grid = document.getElementById('categories-grid');
-  grid.innerHTML = CATEGORIES.map(cat => `
-    <div class="cat-card" style="--cat-color:${cat.color}" onclick="startQuiz('${cat.id}')">
-      <span class="cat-icon">${cat.icon}</span>
-      <div class="cat-name">${cat.name}</div>
-      <div class="cat-desc">${cat.desc}</div>
-      <span class="cat-count">${cat.count} questions</span>
-    </div>
-  `).join('');
+function renderCats(){
+  document.getElementById('cats-grid').innerHTML=CATS_LIST.map(c=>`
+    <div class="cat-card" style="--cc2:${c.color}" onclick="startQuiz('${c.id}')">
+      <div class="cat-icon-w">${c.icon}</div>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-count">${Q[c.id].length} questions</div>
+    </div>`).join('');
 }
 
-// =============================================
-// QUIZ LOGIC
-// =============================================
-function startQuiz(categoryId) {
-  lastCategory = categoryId;
-  const questions = [...QUESTIONS[categoryId]].sort(() => Math.random() - 0.5).slice(0, 10);
-  const cat = CATEGORIES.find(c => c.id === categoryId);
-  
-  currentQuiz = {
-    questions, current: 0, score: 0, correct: 0,
-    categoryId, categoryName: cat.name,
-    startTime: Date.now(), questionTimes: []
-  };
-
-  document.getElementById('quiz-cat-label').textContent = `${cat.icon} ${cat.name}`;
-  showScreen('quiz');
-  loadQuestion();
+function renderConts(){
+  document.getElementById('conts-grid').innerHTML=CONTS.map(c=>`
+    <div class="cont-card" style="--cc:${c.color}" onclick="startCQ('${c.id}')">
+      <span class="cont-emoji">${c.emoji}</span>
+      <div class="cont-name">${c.name}</div>
+      <div class="cont-stats">${c.desc}</div>
+      <span class="cont-tag">Name all countries →</span>
+    </div>`).join('');
 }
 
-function startDailyChallenge() {
-  // Mix questions from all categories
-  const daily = [];
-  Object.values(QUESTIONS).forEach(qs => {
-    daily.push(...qs.sort(() => Math.random() - 0.5).slice(0, 2));
+function setupDaily(){
+  const themes=['🌍 African Geography','🪐 Space Exploration','🌊 Oceans & Islands','🏔️ Mountains & Borders','🚩 Flags of the World','🏆 World Records','🗺️ Asian Capitals'];
+  document.getElementById('daily-theme').textContent=themes[new Date().getDay()];
+}
+
+// ── CONTINENT QUIZ ──
+function startCQ(id){
+  const cont=CONTS.find(c=>c.id===id);
+  cq={cont,found:[],score:0,timeLeft:cont.time,done:false};
+  document.getElementById('cq-emoji').textContent=cont.emoji;
+  document.getElementById('cq-title').textContent=cont.name;
+  document.getElementById('cq-sub').textContent=`Name all ${cont.countries.length} countries`;
+  document.getElementById('found-tags').innerHTML='';
+  document.getElementById('missed-box').style.display='none';
+  document.getElementById('cq-input').value='';
+  document.getElementById('cq-input').disabled=false;
+  updateCQProg();
+  showScreen('continent');
+  clearInterval(cqInt);
+  cqInt=setInterval(()=>{cq.timeLeft--;updateCQTimer();if(cq.timeLeft<=0){clearInterval(cqInt);endCQ();}},1000);
+  setTimeout(()=>document.getElementById('cq-input').focus(),300);
+}
+
+function updateCQTimer(){
+  const m=Math.floor(cq.timeLeft/60),s=(cq.timeLeft%60).toString().padStart(2,'0');
+  const el=document.getElementById('cq-timer');
+  el.textContent=`${m}:${s}`;
+  el.className='cq-timer-big'+(cq.timeLeft<=30?' urgent':'');
+}
+
+function updateCQProg(){
+  const f=cq.found.length,t=cq.cont.countries.length;
+  document.getElementById('cq-count').textContent=`${f} / ${t}`;
+  document.getElementById('cq-bar').style.width=`${(f/t)*100}%`;
+}
+
+function submitCountry(){
+  const inp=document.getElementById('cq-input');
+  const val=inp.value.trim(); if(!val) return;
+  const norm=val.toLowerCase().replace(/[^a-z\s]/g,'');
+  const match=cq.cont.countries.find(c=>{
+    const cn=c.toLowerCase().replace(/[^a-z\s]/g,'');
+    return cn===norm||(cn.includes(norm)&&norm.length>3)||(norm.includes(cn)&&cn.length>4);
   });
-  const questions = daily.sort(() => Math.random() - 0.5).slice(0, 10);
-  
-  currentQuiz = {
-    questions, current: 0, score: 0, correct: 0,
-    categoryId: 'daily', categoryName: 'Daily Challenge',
-    startTime: Date.now(), questionTimes: []
-  };
-
-  document.getElementById('quiz-cat-label').textContent = '⚡ Daily Challenge';
-  showScreen('quiz');
-  loadQuestion();
+  if(!match){showToast('Not found — try again!','error');inp.select();return;}
+  if(cq.found.includes(match)){showToast('Already found!','info');inp.value='';return;}
+  cq.found.push(match);
+  const pts=Math.max(50,cq.timeLeft*2); cq.score+=pts;
+  const tag=document.createElement('div'); tag.className='found-tag'; tag.textContent=match;
+  document.getElementById('found-tags').appendChild(tag);
+  updateCQProg(); spawnParticles(inp);
+  showToast(`✓ ${match}! +${pts}pts`,'success');
+  inp.value='';
+  if(cq.found.length===cq.cont.countries.length){clearInterval(cqInt);setTimeout(()=>endCQ(true),500);}
 }
 
-function loadQuestion() {
-  const { questions, current } = currentQuiz;
-  if (current >= questions.length) { endQuiz(); return; }
-
-  const q = questions[current];
-  const total = questions.length;
-
-  document.getElementById('quiz-progress').style.width = `${(current / total) * 100}%`;
-  document.getElementById('quiz-num').textContent = `Question ${current + 1} of ${total}`;
-  document.getElementById('question-text').textContent = q.q;
-  document.getElementById('fun-fact').classList.remove('show');
-  document.getElementById('next-btn').style.display = 'none';
-
-  const letters = ['A', 'B', 'C', 'D'];
-  const grid = document.getElementById('options-grid');
-  grid.innerHTML = q.opts.map((opt, i) => `
-    <button class="option-btn" onclick="selectAnswer('${['a','b','c','d'][i]}', this)">
-      <span class="option-letter">${letters[i]}</span>
-      ${opt}
-    </button>
-  `).join('');
-
-  startTimer();
+function giveHint(){
+  const rem=cq.cont.countries.filter(c=>!cq.found.includes(c));
+  if(!rem.length) return;
+  const h=rem[Math.floor(Math.random()*rem.length)];
+  cq.score=Math.max(0,cq.score-50);
+  showToast(`💡 Starts with "${h.substring(0,3)}..."`, 'info');
 }
 
-function startTimer() {
-  clearInterval(timerInterval);
-  timeLeft = 20;
-  const timerEl = document.getElementById('quiz-timer');
-  timerEl.textContent = timeLeft;
-  timerEl.classList.remove('urgent');
+function giveUp(){clearInterval(cqInt);endCQ(false);}
 
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    timerEl.textContent = timeLeft;
-    if (timeLeft <= 5) timerEl.classList.add('urgent');
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      timeOut();
-    }
-  }, 1000);
-}
-
-function timeOut() {
-  const q = currentQuiz.questions[currentQuiz.current];
-  const correctIdx = ['a','b','c','d'].indexOf(q.a);
-  const btns = document.querySelectorAll('.option-btn');
-  btns.forEach(b => b.disabled = true);
-  btns[correctIdx].classList.add('correct');
-  showFunFact(q.fact);
-  document.getElementById('next-btn').style.display = 'inline-flex';
-  currentQuiz.questionTimes.push(20);
-}
-
-function selectAnswer(answer, btn) {
-  clearInterval(timerInterval);
-  const timeTaken = 20 - timeLeft;
-  currentQuiz.questionTimes.push(timeTaken);
-
-  const q = currentQuiz.questions[currentQuiz.current];
-  const btns = document.querySelectorAll('.option-btn');
-  btns.forEach(b => b.disabled = true);
-
-  const correctIdx = ['a','b','c','d'].indexOf(q.a);
-  btns[correctIdx].classList.add('correct');
-
-  if (answer === q.a) {
-    currentQuiz.correct++;
-    const points = Math.max(10, 20 - timeTaken) * 5;
-    currentQuiz.score += points;
-    showToast(`✓ Correct! +${points} pts`, 'success');
-  } else {
-    btn.classList.add('wrong');
-    showToast('✗ Wrong!', 'error');
+function endCQ(perfect=false){
+  cq.done=true;
+  document.getElementById('cq-input').disabled=true;
+  const rem=cq.cont.countries.filter(c=>!cq.found.includes(c));
+  if(rem.length){
+    document.getElementById('missed-box').style.display='block';
+    document.getElementById('missed-tags').innerHTML=rem.map(c=>`<span class="missed-tag">${c}</span>`).join('');
   }
-
-  showFunFact(q.fact);
-  document.getElementById('next-btn').style.display = 'inline-flex';
+  const pct=cq.found.length/cq.cont.countries.length;
+  const msg=perfect?'🎉 Perfect! You found them all!':pct>.8?'🌟 Excellent!':pct>.5?'👍 Good work!':'📚 Keep exploring!';
+  showToast(msg,'success');
 }
 
-function showFunFact(fact) {
-  if (!fact) return;
-  document.getElementById('fun-fact-text').textContent = fact;
-  document.getElementById('fun-fact').classList.add('show');
+// ── TRIVIA QUIZ ──
+function startQuiz(catId){
+  lastCat=catId;
+  const qs=[...Q[catId]].sort(()=>Math.random()-.5).slice(0,10);
+  const cat=CATS_LIST.find(c=>c.id===catId);
+  quiz={qs,cur:0,score:0,correct:0,catName:cat.name,catIcon:cat.icon,times:[]};
+  document.getElementById('q-cat').textContent=`${cat.icon} ${cat.name}`;
+  showScreen('quiz'); loadQ();
 }
 
-function nextQuestion() {
-  currentQuiz.current++;
-  loadQuestion();
+function startDailyChallenge(){
+  const all=Object.values(Q).flat();
+  const qs=all.sort(()=>Math.random()-.5).slice(0,10);
+  quiz={qs,cur:0,score:0,correct:0,catName:'Daily Challenge',catIcon:'⚡',times:[]};
+  document.getElementById('q-cat').textContent='⚡ Daily Challenge';
+  showScreen('quiz'); loadQ();
 }
 
-function exitQuiz() {
-  clearInterval(timerInterval);
-  showScreen('home');
+function loadQ(){
+  const {qs,cur}=quiz; if(cur>=qs.length){endQuiz();return;}
+  const q=qs[cur];
+  document.getElementById('q-prog').style.width=`${(cur/qs.length)*100}%`;
+  document.getElementById('q-num').textContent=`Question ${cur+1} of ${qs.length}`;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('fact-box').classList.remove('show');
+  document.getElementById('next-btn').style.display='none';
+  const L=['A','B','C','D'];
+  document.getElementById('opts-grid').innerHTML=q.o.map((opt,i)=>`
+    <button class="opt-btn" onclick="selectA('${'abcd'[i]}',this)">
+      <span class="opt-letter">${L[i]}</span>${opt}
+    </button>`).join('');
+  startQTimer();
 }
 
-function endQuiz() {
-  clearInterval(timerInterval);
-  const { score, correct, questions, questionTimes } = currentQuiz;
-  const wrong = questions.length - correct;
-  const avgTime = Math.round(questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length);
-  const pct = Math.round((correct / questions.length) * 100);
+function startQTimer(){
+  clearInterval(qInt); let t=20;
+  const el=document.getElementById('q-timer'); el.textContent=t; el.className='q-timer';
+  qInt=setInterval(()=>{t--;el.textContent=t;if(t<=5)el.className='q-timer urgent';if(t<=0){clearInterval(qInt);qTimeout();}},1000);
+}
 
-  document.getElementById('result-score').textContent = score;
-  document.getElementById('res-correct').textContent = correct;
-  document.getElementById('res-wrong').textContent = wrong;
-  document.getElementById('res-time').textContent = `${avgTime}s`;
+function qTimeout(){
+  const q=quiz.qs[quiz.cur];
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  document.querySelectorAll('.opt-btn')['abcd'.indexOf(q.a)].classList.add('correct');
+  showFact(q.f); document.getElementById('next-btn').style.display='inline-block'; quiz.times.push(20);
+}
 
-  const titles = ['Keep exploring! 🌱', 'Good effort! 🌍', 'Great work! 🌟', 'Impressive! 🏆', 'Geography Master! 👑'];
-  const idx = Math.floor(pct / 25);
-  document.getElementById('result-title').textContent = titles[Math.min(idx, 4)];
-  document.getElementById('result-subtitle').textContent = `You answered ${correct} out of ${questions.length} correctly — ${pct}%`;
+function selectA(ans,btn){
+  clearInterval(qInt);
+  const taken=20-parseInt(document.getElementById('q-timer').textContent); quiz.times.push(taken);
+  const q=quiz.qs[quiz.cur];
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  document.querySelectorAll('.opt-btn')['abcd'.indexOf(q.a)].classList.add('correct');
+  if(ans===q.a){quiz.correct++;const pts=Math.max(10,20-taken)*5;quiz.score+=pts;spawnParticles(btn);showToast(`✓ Correct! +${pts}pts`,'success');}
+  else{btn.classList.add('wrong');showToast('✗ Not quite!','error');}
+  showFact(q.f); document.getElementById('next-btn').style.display='inline-block';
+}
 
-  // Animate score ring
-  const dashoffset = 471 - (471 * pct / 100);
-  document.getElementById('score-circle').style.transition = 'stroke-dashoffset 1s ease';
-  setTimeout(() => document.getElementById('score-circle').style.strokeDashoffset = dashoffset, 100);
+function showFact(f){if(!f)return;document.getElementById('fact-text').textContent=f;document.getElementById('fact-box').classList.add('show');}
+function nextQ(){quiz.cur++;loadQ();}
+function exitQuiz(){clearInterval(qInt);showScreen('home');}
+function playAgain(){if(lastCat)startQuiz(lastCat);else showScreen('home');}
 
+function endQuiz(){
+  clearInterval(qInt);
+  const {score,correct,qs,times}=quiz;
+  const wrong=qs.length-correct;
+  const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+  const pct=Math.round(correct/qs.length*100);
+  document.getElementById('res-pts').textContent=score;
+  document.getElementById('res-correct').textContent=correct;
+  document.getElementById('res-wrong').textContent=wrong;
+  document.getElementById('res-avg').textContent=avg+'s';
+  const titles=['Keep going! 🌱','Nice try! 🌍','Great work! 🌟','Impressive! 🏆','Geography Master! 👑'];
+  document.getElementById('res-title').textContent=titles[Math.min(Math.floor(pct/25),4)];
+  document.getElementById('res-sub').textContent=`${correct} out of ${qs.length} correct — ${pct}%`;
+  setTimeout(()=>{const off=528-(528*pct/100);const arc=document.getElementById('score-arc');arc.style.transition='stroke-dashoffset 1.2s cubic-bezier(0.23,1,0.32,1)';arc.style.strokeDashoffset=off;},200);
   showScreen('results');
-
-  // Save to DB if logged in
-  if (currentPlayer) saveScore(score, correct);
+  if(player) saveScore(score,correct);
 }
 
-function playAgain() {
-  if (lastCategory) startQuiz(lastCategory);
-  else showScreen('home');
+// ── DATABASE ──
+async function saveScore(score,correct){
+  try{
+    await db.post('quiz_sessions',{player_id:player.id,category:quiz.catName,score,correct_answers:correct,total_questions:quiz.qs.length});
+    const lb=await db.get('leaderboard',`player_id=eq.${player.id}`);
+    if(lb&&lb[0]){await db.patch('leaderboard',lb[0].id,{total_score:(lb[0].total_score||0)+score,quizzes_played:(lb[0].quizzes_played||0)+1,username:player.username,country:player.country,last_played:new Date().toISOString()});}
+    else{await db.post('leaderboard',{player_id:player.id,username:player.username,country:player.country,total_score:score,quizzes_played:1});}
+    loadStats(); loadLeaderboard();
+  }catch(e){console.log(e);}
 }
 
-// =============================================
-// DATABASE OPERATIONS
-// =============================================
-async function saveScore(score, correct) {
-  try {
-    await db.post('quiz_sessions', {
-      player_id: currentPlayer.id,
-      category: currentQuiz.categoryName,
-      score, correct_answers: correct,
-      total_questions: currentQuiz.questions.length
-    });
-
-    // Update leaderboard
-    const lb = await db.get('leaderboard', `player_id=eq.${currentPlayer.id}`);
-    if (lb && lb.length > 0) {
-      await db.patch('leaderboard', lb[0].id, {
-        total_score: (lb[0].total_score || 0) + score,
-        quizzes_played: (lb[0].quizzes_played || 0) + 1,
-        last_played: new Date().toISOString()
-      });
-    } else {
-      await db.post('leaderboard', {
-        player_id: currentPlayer.id,
-        username: currentPlayer.username,
-        country: currentPlayer.country,
-        total_score: score,
-        quizzes_played: 1
-      });
-    }
-    loadStats();
-  } catch(e) { console.log('Score save error:', e); }
+async function loadStats(){
+  if(!player)return;
+  try{
+    const lb=await db.get('leaderboard',`player_id=eq.${player.id}`);
+    if(lb&&lb[0]){document.getElementById('stat-played').textContent=lb[0].quizzes_played||0;document.getElementById('stat-score').textContent=(lb[0].total_score||0).toLocaleString();}
+    const all=await db.get('leaderboard','order=total_score.desc');
+    const rank=all.findIndex(p=>p.player_id===player.id)+1;
+    if(rank>0)document.getElementById('stat-rank').textContent='#'+rank;
+  }catch(e){}
 }
 
-async function loadStats() {
-  if (!currentPlayer) return;
-  try {
-    const lb = await db.get('leaderboard', `player_id=eq.${currentPlayer.id}`);
-    if (lb && lb[0]) {
-      document.getElementById('stat-played').textContent = lb[0].quizzes_played || 0;
-      document.getElementById('stat-score').textContent = (lb[0].total_score || 0).toLocaleString();
-    }
-  } catch(e) {}
+async function loadLeaderboard(){
+  try{
+    const data=await db.get('leaderboard','order=total_score.desc&limit=20');
+    const flags={IS:'🇮🇸',CH:'🇨🇭',US:'🇺🇸',GB:'🇬🇧',NO:'🇳🇴',SE:'🇸🇪',DK:'🇩🇰',FI:'🇫🇮',DE:'🇩🇪',FR:'🇫🇷',IT:'🇮🇹',AT:'🇦🇹'};
+    const medals=['🥇','🥈','🥉'];
+    if(!data||!data.length){document.getElementById('lb-list').innerHTML=`<div class="empty-state"><div class="ei">🏆</div><p>No scores yet — be the first!</p></div>`;return;}
+    document.getElementById('lb-list').innerHTML=data.map((p,i)=>`
+      <div class="lb-item${player&&p.player_id===player.id?' me':''}">
+        <div class="lb-rank ${i<3?'r'+(i+1):''}">${i<3?medals[i]:i+1}</div>
+        <div class="lb-avatar">${flags[p.country]||'🌍'}</div>
+        <div class="lb-info"><div class="lb-name">${p.username||'Explorer'}${player&&p.player_id===player.id?' (you)':''}</div><div class="lb-country">${p.country||'World'}</div></div>
+        <div><div class="lb-pts">${(p.total_score||0).toLocaleString()}</div><div class="lb-games">${p.quizzes_played||0} quizzes</div></div>
+      </div>`).join('');
+  }catch(e){document.getElementById('lb-list').innerHTML=`<div class="empty-state"><div class="ei">🌍</div><p>Loading...</p></div>`;}
 }
 
-async function loadLeaderboard() {
-  try {
-    const lb = await db.get('leaderboard', 'limit=20&order=total_score.desc');
-    const container = document.getElementById('leaderboard-content');
-    
-    if (!lb || lb.length === 0) {
-      container.innerHTML = `<div class="empty-state"><div class="icon">🏆</div><p>No scores yet — be the first!</p><button class="btn-primary" onclick="showScreen('home')" style="margin-top:16px">Start Playing</button></div>`;
-      return;
-    }
+// ── AUTH ──
+function showLogin(){if(player){showToast('Signed in as '+player.username,'info');return;}document.getElementById('login-modal').classList.add('show');}
+function closeModal(){document.getElementById('login-modal').classList.remove('show');}
 
-    const countryFlags = { IS: '🇮🇸', US: '🇺🇸', GB: '🇬🇧', NO: '🇳🇴', SE: '🇸🇪', DK: '🇩🇰', FI: '🇫🇮', DE: '🇩🇪', FR: '🇫🇷' };
-    const rankColors = ['gold', 'silver', 'bronze'];
+async function createPlayer(){
+  const u=document.getElementById('inp-user').value.trim();
+  const e=document.getElementById('inp-email').value.trim();
+  const c=document.getElementById('inp-country').value;
+  if(!u){showToast('Please enter a username','error');return;}
+  try{
+    const r=await db.post('players',{username:u,email:e||null,country:c||'Other'});
+    if(r&&r[0]){player=r[0];localStorage.setItem('gqp',JSON.stringify(player));updateAuthUI();closeModal();showToast(`Welcome, ${u}! 🌍`,'success');loadStats();}
+    else{showToast('Username taken — try another!','error');}
+  }catch(e){showToast('Error creating profile','error');}
+}
 
-    container.innerHTML = `
-      <table class="lb-table">
-        <thead><tr><th>#</th><th>Player</th><th>Country</th><th>Quizzes</th><th>Score</th></tr></thead>
-        <tbody>
-          ${lb.map((p, i) => {
-            const isMe = currentPlayer && p.player_id === currentPlayer.id;
-            const flag = countryFlags[p.country] || '🌍';
-            return `<tr class="lb-row${isMe ? ' me' : ''}">
-              <td><span class="lb-rank ${rankColors[i] || ''}">${i + 1}</span></td>
-              <td><span class="lb-name">${p.username || 'Explorer'}${isMe ? ' (you)' : ''}</span></td>
-              <td>${flag}</td>
-              <td>${p.quizzes_played || 0}</td>
-              <td><span class="lb-score">${(p.total_score || 0).toLocaleString()}</span></td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>`;
-  } catch(e) {
-    document.getElementById('leaderboard-content').innerHTML = `<div class="empty-state"><div class="icon">🌍</div><p>Loading leaderboard...</p></div>`;
+function updateAuthUI(){
+  if(!player)return;
+  const btn=document.getElementById('auth-btn');
+  btn.textContent=player.username;
+  btn.style.cssText='background:rgba(0,212,200,0.1);color:var(--teal);border:1px solid rgba(0,212,200,0.2);padding:9px 22px;border-radius:50px;font-family:Inter,sans-serif;font-size:0.875rem;font-weight:600;cursor:pointer;';
+  document.getElementById('streak-pill').style.display='flex';
+}
+
+// ── PARTICLES ──
+function spawnParticles(el){
+  const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const cols=['#00d4c8','#ffd166','#06ffa5','#a78bfa','#ff6b6b'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div'); p.className='particle';
+    const sz=Math.random()*8+4,ang=Math.random()*360,dist=Math.random()*120+60;
+    const tx=Math.cos(ang*Math.PI/180)*dist,ty=Math.sin(ang*Math.PI/180)*dist-60;
+    p.style.cssText=`left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};--tx:${tx}px;--ty:${ty}px;animation-duration:${Math.random()*.4+.6}s;`;
+    document.body.appendChild(p); setTimeout(()=>p.remove(),1100);
   }
 }
 
-// =============================================
-// AUTH / PLAYER
-// =============================================
-function showLogin() {
-  if (currentPlayer) {
-    showToast('Already signed in as ' + currentPlayer.username, 'success');
-    return;
-  }
-  document.getElementById('login-modal').classList.add('show');
+// ── NAV ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('nav-'+id); if(nb)nb.classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='leaderboard')loadLeaderboard();
 }
 
-function closeModal() {
-  document.getElementById('login-modal').classList.remove('show');
-}
-
-async function createPlayer() {
-  const username = document.getElementById('input-username').value.trim();
-  const email = document.getElementById('input-email').value.trim();
-  const country = document.getElementById('input-country').value;
-
-  if (!username) { showToast('Please enter a username!', 'error'); return; }
-
-  try {
-    const result = await db.post('players', { username, email: email || null, country: country || 'Other' });
-    if (result && result[0]) {
-      currentPlayer = result[0];
-      localStorage.setItem('geoquest_player', JSON.stringify(currentPlayer));
-      updateAuthUI();
-      closeModal();
-      showToast(`Welcome, ${username}! 🌍`, 'success');
-    } else {
-      showToast('Username taken — try another!', 'error');
-    }
-  } catch(e) {
-    showToast('Could not create profile. Try again!', 'error');
-  }
-}
-
-function updateAuthUI() {
-  if (!currentPlayer) return;
-  document.getElementById('auth-btn').textContent = currentPlayer.username;
-  document.getElementById('auth-btn').style.color = 'var(--teal)';
-  document.getElementById('streak-badge').style.display = 'flex';
-}
-
-// =============================================
-// DAILY SCREEN
-// =============================================
-function setupDailyScreen() {
-  const themes = ['🌍 African Capitals Day', '🪐 Space Exploration', '🌊 Oceans & Islands', '🏔️ Mountains & Rivers', '🚩 Flags of the World', '🏆 World Records', '🗺️ Asian Geography'];
-  const today = new Date();
-  const theme = themes[today.getDay()];
-
-  document.getElementById('daily-date').textContent = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  document.getElementById('daily-theme').textContent = theme;
-  document.getElementById('daily-desc').textContent = 'A special mixed quiz featuring geography, science and world trivia';
-}
-
-// =============================================
-// NAVIGATION
-// =============================================
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + id).classList.add('active');
-  document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-  const navBtn = document.getElementById('nav-' + id);
-  if (navBtn) navBtn.classList.add('active');
-  window.scrollTo(0, 0);
-
-  if (id === 'leaderboard') loadLeaderboard();
-}
-
-// =============================================
-// TOAST
-// =============================================
-function showToast(msg, type = '') {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.className = `toast ${type} show`;
-  setTimeout(() => toast.classList.remove('show'), 2500);
+// ── TOAST ──
+function showToast(msg,type=''){
+  const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),2500);
 }
 </script>
 </body>
