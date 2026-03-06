@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geographic Soul — Which Country Matches Your Personality?</title>
+<meta property="og:title" content="Which country matches your soul?">
+<meta property="og:description" content="10 questions. No geography knowledge needed. Just honesty.">
+<meta property="og:url" content="https://trivia.azurenexus.com/soul">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#07080c;--bg2:#0d0f18;
+  --teal:#00d4c8;--blue:#0099ee;
+  --text:rgba(255,255,255,0.92);--muted:rgba(255,255,255,0.45);--dim:rgba(255,255,255,0.12);
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans',system-ui,sans-serif;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden;}
+#app{min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── SCREENS ── */
+.screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;opacity:0;animation:fadeIn .5s ease forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}},
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(0,212,200,0.2);}50%{box-shadow:0 0 40px rgba(0,212,200,0.5);}}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+@keyframes revealResult{from{opacity:0;transform:scale(0.96) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+
+/* ── PROGRESS BAR ── */
+#progress-bar{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.06);z-index:100;}
+#progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));transition:width .4s cubic-bezier(.4,0,.2,1);}
+
+/* ── INTRO ── */
+#intro .eyebrow{font-size:11px;font-weight:700;letter-spacing:.25em;color:var(--teal);text-transform:uppercase;margin-bottom:1.5rem;animation:slideUp .6s .1s both;}
+#intro h1{font-family:var(--font-display);font-size:clamp(2.2rem,7vw,4rem);font-weight:900;line-height:1.1;color:#fff;margin-bottom:1.2rem;text-align:center;animation:slideUp .6s .2s both;}
+#intro h1 em{font-style:italic;color:var(--teal);}
+#intro .sub{font-size:clamp(15px,3vw,18px);line-height:1.8;color:var(--muted);max-width:460px;text-align:center;margin-bottom:2.8rem;animation:slideUp .6s .3s both;}
+#intro .globe{font-size:clamp(80px,18vw,120px);animation:float 4s ease-in-out infinite;display:block;text-align:center;margin-bottom:1.5rem;}
+#intro .stats{display:flex;gap:32px;margin-bottom:2.5rem;animation:slideUp .6s .35s both;}
+#intro .stat{text-align:center;}
+#intro .stat-n{font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--teal);}
+#intro .stat-l{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* ── BTN ── */
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--blue));color:#07080c;font-family:var(--font-body);font-weight:800;font-size:16px;padding:16px 48px;border-radius:100px;border:none;cursor:pointer;letter-spacing:.03em;transition:transform .2s,box-shadow .2s;animation:slideUp .6s .4s both;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,212,200,0.35);}
+.btn-ghost{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-family:var(--font-body);font-weight:600;font-size:15px;padding:13px 28px;border-radius:100px;cursor:pointer;transition:all .2s;}
+.btn-ghost:hover{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.3);}
+
+/* ── QUIZ ── */
+#quiz{max-width:560px;width:100%;margin:0 auto;padding-top:3rem;}
+#quiz .q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;font-size:13px;color:var(--muted);}
+#quiz .q-dot-row{display:flex;gap:6px;}
+#quiz .q-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s;}
+#quiz .q-dot.done{background:var(--teal);}
+#quiz .q-dot.active{background:var(--teal);box-shadow:0 0 0 3px rgba(0,212,200,0.25);}
+#quiz h2{font-family:var(--font-display);font-size:clamp(1.5rem,4.5vw,2.2rem);font-weight:700;color:#fff;line-height:1.3;margin-bottom:.6rem;text-align:center;}
+#quiz .q-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:2rem;font-style:italic;}
+#quiz .opts{display:grid;gap:10px;}
+.opt-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left;transition:all .18s;width:100%;}
+.opt-btn:hover:not(:disabled){background:rgba(0,212,200,0.06);border-color:rgba(0,212,200,0.35);transform:translateX(3px);}
+.opt-btn.selected{background:rgba(0,212,200,0.1);border-color:rgba(0,212,200,0.6);transform:translateX(3px);}
+.opt-btn:disabled{cursor:default;}
+.opt-btn .opt-emoji{font-size:26px;flex-shrink:0;width:36px;text-align:center;}
+.opt-btn .opt-text{font-size:15px;line-height:1.4;color:rgba(255,255,255,0.88);font-weight:500;}
+.opt-btn.selected .opt-text{color:#fff;font-weight:700;}
+
+/* ── LOADING ── */
+#loading{text-align:center;gap:28px;}
+#loading .spinner{width:56px;height:56px;border-radius:50%;border:3px solid rgba(0,212,200,0.15);border-top-color:var(--teal);animation:spin 1s linear infinite;}
+#loading .l-text{font-size:18px;color:var(--muted);font-style:italic;}
+#loading .l-country{font-family:var(--font-display);font-size:2rem;color:#fff;margin-top:12px;opacity:0;animation:fadeIn 1s .5s both;}
+#loading .l-emoji{font-size:80px;opacity:0;animation:fadeIn 1s .3s both;}
+
+/* ── RESULT ── */
+#result{position:relative;overflow:hidden;text-align:center;padding:3rem 1.5rem 4rem;}
+#result-bg{position:absolute;inset:0;transition:opacity 1s;}
+#result-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.4) 50%,rgba(0,0,0,0.25) 100%);}
+#result-content{position:relative;z-index:2;max-width:620px;margin:0 auto;animation:revealResult .8s .2s both;}
+#result .r-eyebrow{font-size:11px;font-weight:700;letter-spacing:.25em;color:rgba(0,212,200,.9);text-transform:uppercase;margin-bottom:1.5rem;}
+#result .r-flag{font-size:clamp(80px,18vw,130px);line-height:1;margin-bottom:1.2rem;display:block;animation:float 5s ease-in-out infinite;}
+#result .r-country{font-family:var(--font-display);font-size:clamp(2.8rem,10vw,5.5rem);font-weight:900;color:#fff;line-height:1;margin-bottom:.6rem;}
+#result .r-word{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:100px;padding:6px 20px;margin-bottom:2rem;}
+#result .r-word em{font-style:italic;font-weight:700;color:var(--teal);font-size:15px;}
+#result .r-word span{color:var(--muted);font-size:13px;}
+#result .r-traits{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:2.2rem;}
+#result .r-trait{background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.13);border-radius:100px;padding:8px 18px;font-size:14px;font-weight:600;color:rgba(255,255,255,0.85);}
+#result .r-ai{font-size:clamp(16px,3vw,19px);line-height:1.85;color:rgba(255,255,255,0.82);margin-bottom:2.8rem;font-style:italic;max-width:520px;margin-left:auto;margin-right:auto;}
+#result .r-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+/* ── SHARE PREVIEW ── */
+#share-preview{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;padding:1.5rem;backdrop-filter:blur(12px);}
+#share-preview.open{display:flex;}
+#share-box{background:#0d0f18;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:2rem;max-width:460px;width:100%;text-align:center;}
+#share-canvas{width:100%;max-width:360px;height:360px;border-radius:16px;margin:0 auto 1.5rem;display:block;}
+#share-box h3{font-family:var(--font-display);font-size:1.4rem;margin-bottom:.5rem;}
+#share-box p{color:var(--muted);font-size:14px;margin-bottom:1.5rem;}
+.share-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+/* ── BACK LINK ── */
+.back{position:fixed;top:1rem;left:1rem;z-index:50;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;text-decoration:none;transition:color .2s;}
+.back:hover{color:#fff;}
+.back svg{width:16px;height:16px;}
+
+/* ── MOBILE ── */
+@media(max-width:480px){
+  #result .r-actions{flex-direction:column;align-items:center;}
+  #result .r-actions button{width:100%;max-width:320px;}
+}
+</style>
+</head>
+<body>
+
+<div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+
+<a href="/" class="back">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+  GeoQuest
+</a>
+
+<div id="app">
+
+<!-- INTRO -->
+<section id="intro" class="screen">
+  <span class="globe">🌍</span>
+  <div class="eyebrow">Geographic Soul · A Personality Quiz</div>
+  <h1>Which country<br>matches your <em>soul?</em></h1>
+  <p class="sub">10 questions about how you think, live, and see the world.<br>No geography knowledge needed — just honesty.</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-n">10</div><div class="stat-l">Questions</div></div>
+    <div class="stat"><div class="stat-n">25</div><div class="stat-l">Countries</div></div>
+    <div class="stat"><div class="stat-n">~3 min</div><div class="stat-l">To complete</div></div>
+  </div>
+  <button class="btn-primary" onclick="startQuiz()">Discover Your Country →</button>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz" class="screen" style="display:none">
+  <div class="q-meta">
+    <span id="q-num">Question 1 of 10</span>
+    <div class="q-dot-row" id="q-dots"></div>
+  </div>
+  <h2 id="q-text"></h2>
+  <p id="q-sub" class="q-sub"></p>
+  <div class="opts" id="q-opts"></div>
+</section>
+
+<!-- LOADING -->
+<section id="loading" class="screen" style="display:none">
+  <div class="l-emoji" id="l-emoji"></div>
+  <div class="spinner"></div>
+  <p class="l-text">Reading your geographic soul…</p>
+  <p class="l-country" id="l-country"></p>
+</section>
+
+<!-- RESULT -->
+<section id="result" class="screen" style="display:none;padding-top:4rem;">
+  <div id="result-bg"></div>
+  <div id="result-overlay"></div>
+  <div id="result-content">
+    <div class="r-eyebrow">Your Geographic Soul</div>
+    <span class="r-flag" id="r-flag"></span>
+    <div class="r-country" id="r-country"></div>
+    <div class="r-word"><em id="r-word"></em><span>·</span><span id="r-wdef"></span></div>
+    <div class="r-traits" id="r-traits"></div>
+    <p class="r-ai" id="r-ai">Analysing your answers…</p>
+    <div class="r-actions">
+      <button class="btn-primary" onclick="openShare()">📸 Share Your Result</button>
+      <button class="btn-ghost" onclick="retake()">🔄 Retake Quiz</button>
+      <button class="btn-ghost" onclick="location.href='/guess'">🎮 Play GeoQuest</button>
+    </div>
+  </div>
+</section>
+
+<!-- SHARE PREVIEW -->
+<div id="share-preview">
+  <div id="share-box">
+    <h3 id="share-title">Your Soul Card</h3>
+    <p id="share-sub">Save and share to Instagram, TikTok, or WhatsApp</p>
+    <canvas id="share-canvas" width="1080" height="1080"></canvas>
+    <div class="share-btns">
+      <button class="btn-primary" onclick="downloadCard()">⬇ Download Image</button>
+      <button class="btn-ghost" onclick="copyText()">📋 Copy Link</button>
+      <button class="btn-ghost" onclick="closeShare()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+
+const COUNTRIES = {
+  JP:{name:"Japan",emoji:"🇯🇵",c1:"#1a0008",c2:"#9b0028",word:"Wabi-sabi",wdef:"beauty found in imperfection",t1:"Quiet perfectionism",t2:"Deep craft focus",t3:"Intentional living"},
+  IS:{name:"Iceland",emoji:"🇮🇸",c1:"#001433",c2:"#003c7a",word:"Þetta reddast",wdef:"it'll all work out",t1:"Fierce independence",t2:"Solitude as strength",t3:"Trust in the untamed"},
+  BR:{name:"Brazil",emoji:"🇧🇷",c1:"#003d1a",c2:"#004d20",word:"Gostoso",wdef:"an exuberant joy in being alive",t1:"Infectious warmth",t2:"Living in the now",t3:"Joy as resistance"},
+  DE:{name:"Germany",emoji:"🇩🇪",c1:"#0d0d0d",c2:"#1a1a00",word:"Fingerspitzengefühl",wdef:"intuitive feeling for what's right",t1:"Precision & systems",t2:"Earned reliability",t3:"Logic as elegance"},
+  IT:{name:"Italy",emoji:"🇮🇹",c1:"#001a0d",c2:"#1a0000",word:"Dolce far niente",wdef:"the sweetness of doing nothing",t1:"Passion in everything",t2:"Beauty as necessity",t3:"Living with abandon"},
+  NO:{name:"Norway",emoji:"🇳🇴",c1:"#001533",c2:"#2d001a",word:"Friluftsliv",wdef:"open-air living as philosophy",t1:"Nature as identity",t2:"Quiet confidence",t3:"Space over noise"},
+  IN:{name:"India",emoji:"🇮🇳",c1:"#2d1100",c2:"#001a1a",word:"Jugaad",wdef:"creative genius under constraint",t1:"Depth of spirit",t2:"Chaos as creativity",t3:"Ancient wisdom"},
+  NL:{name:"Netherlands",emoji:"🇳🇱",c1:"#001a33",c2:"#331000",word:"Gezelligheid",wdef:"warmth that makes a place home",t1:"Direct & honest",t2:"Pragmatic idealism",t3:"Cycling through life"},
+  NZ:{name:"New Zealand",emoji:"🇳🇿",c1:"#000d26",c2:"#0d0000",word:"Kia kaha",wdef:"be strong, remain strong",t1:"Humble adventure",t2:"No-nonsense courage",t3:"Earth over ego"},
+  CH:{name:"Switzerland",emoji:"🇨🇭",c1:"#1a0000",c2:"#0d1a00",word:"Gemütlichkeit",wdef:"coziness, contentment, belonging",t1:"Excellence as standard",t2:"Precision by default",t3:"Quiet discipline"},
+  PT:{name:"Portugal",emoji:"🇵🇹",c1:"#001a00",c2:"#0d0000",word:"Saudade",wdef:"longing for something beautiful that's gone",t1:"Emotional depth",t2:"Melancholy as art",t3:"Warmth beneath reserve"},
+  FR:{name:"France",emoji:"🇫🇷",c1:"#00001a",c2:"#1a0000",word:"Flâneur",wdef:"wandering with philosophical purpose",t1:"Intellectual pride",t2:"Aesthetics as ethics",t3:"Pleasures unapologised"},
+  AU:{name:"Australia",emoji:"🇦🇺",c1:"#00001a",c2:"#0d0000",word:"No worries",wdef:"relaxed confidence that it'll be fine",t1:"Irreverent freedom",t2:"Outdoors as home",t3:"Comfort with chaos"},
+  CA:{name:"Canada",emoji:"🇨🇦",c1:"#1a0000",c2:"#001a00",word:"Terroir",wdef:"a place that shapes who you are",t1:"Quiet multitudes",t2:"Generous by default",t3:"Nature-backed calm"},
+  BT:{name:"Bhutan",emoji:"🇧🇹",c1:"#1a0a00",c2:"#0d0000",word:"Gross National Happiness",wdef:"wellbeing over wealth",t1:"Spiritual clarity",t2:"Presence over progress",t3:"Ancient groundedness"},
+  FI:{name:"Finland",emoji:"🇫🇮",c1:"#000d1a",c2:"#001a0d",word:"Sisu",wdef:"inner strength forged in adversity",t1:"Honest to the bone",t2:"Silence as wisdom",t3:"Resilience without drama"},
+  ES:{name:"Spain",emoji:"🇪🇸",c1:"#1a0000",c2:"#1a0e00",word:"Madrugada",wdef:"the magical hours between midnight and dawn",t1:"Passion without shame",t2:"Late-night living",t3:"Siesta philosophy"},
+  KR:{name:"South Korea",emoji:"🇰🇷",c1:"#1a0000",c2:"#00001a",word:"Han",wdef:"deep sorrow transformed into drive",t1:"Burning ambition",t2:"Collective excellence",t3:"Fast-paced innovation"},
+  MX:{name:"Mexico",emoji:"🇲🇽",c1:"#001a00",c2:"#0d0000",word:"Querencia",wdef:"the place where you are your truest self",t1:"Family as everything",t2:"Celebration as ritual",t3:"Warmth without condition"},
+  GR:{name:"Greece",emoji:"🇬🇷",c1:"#00001a",c2:"#000d1a",word:"Meraki",wdef:"putting your soul into what you do",t1:"Philosophy in daily life",t2:"Slow and intentional",t3:"Ageless perspective"},
+  AR:{name:"Argentina",emoji:"🇦🇷",c1:"#000d1a",c2:"#000d1a",word:"La grieta",wdef:"passionate division that runs impossibly deep",t1:"Fiercely opinionated",t2:"Elegance meets grit",t3:"Depth of feeling"},
+  SG:{name:"Singapore",emoji:"🇸🇬",c1:"#1a0000",c2:"#001a00",word:"Kiasu",wdef:"the fear of missing out that drives excellence",t1:"Ambitious efficiency",t2:"Multicultural mastery",t3:"Systems that sing"},
+  CO:{name:"Colombia",emoji:"🇨🇴",c1:"#0d0e00",c2:"#001a00",word:"Rumba",wdef:"celebration as an act of resilience",t1:"Joy against the odds",t2:"Unexpected warmth",t3:"Life in colour"},
+  TH:{name:"Thailand",emoji:"🇹🇭",c1:"#1a0000",c2:"#00001a",word:"Sanuk",wdef:"the belief that life should be fun",t1:"Graceful hospitality",t2:"Spirituality in the ordinary",t3:"Beauty in patience"},
+  SE:{name:"Sweden",emoji:"🇸🇪",c1:"#000d1a",c2:"#0d0a00",word:"Lagom",wdef:"just the right amount — the art of balance",t1:"Design-minded living",t2:"Equality as instinct",t3:"Thoughtful moderation"},
+};
+
+const QUESTIONS = [
+  {
+    q:"When conflict arises, you instinctively…",
+    sub:"Your gut reaction — not the ideal one",
+    opts:[
+      {t:"Talk it through with logic and evidence",e:"🧠",s:{DE:2,NL:2,CH:2,FI:1,SE:1}},
+      {t:"Smooth it over — harmony matters more than winning",e:"🕊️",s:{JP:2,TH:2,CA:1,KR:1,SE:1}},
+      {t:"Say everything. Passionately. Right now.",e:"🔥",s:{IT:2,ES:2,GR:2,AR:1,BR:1}},
+      {t:"Give it space — these things resolve themselves",e:"🌊",s:{IS:2,NO:2,AU:1,NZ:1,PT:1}},
+    ]
+  },
+  {
+    q:"Your perfect Saturday looks like…",
+    sub:"Be honest — the one you'd actually choose",
+    opts:[
+      {t:"A long hike alone. No phone. Just silence.",e:"🏔️",s:{IS:2,NO:2,FI:2,NZ:1,CA:1}},
+      {t:"A slow, long lunch with people I love",e:"🍷",s:{IT:2,ES:2,GR:2,MX:1,BR:1}},
+      {t:"Exploring somewhere new — museum, market, neighbourhood",e:"🗺️",s:{FR:2,DE:1,SG:1,KR:1,NL:1}},
+      {t:"Completely spontaneous — decided when I wake up",e:"🎲",s:{BR:2,AR:2,CO:2,AU:1,MX:1}},
+    ]
+  },
+  {
+    q:"Your relationship with time is…",
+    sub:"",
+    opts:[
+      {t:"Sacred. Being late is disrespectful.",e:"⏰",s:{DE:2,JP:2,CH:2,SG:2,KR:1}},
+      {t:"A guide, not a rule",e:"🧭",s:{FI:2,NO:2,SE:2,IS:1,NL:1}},
+      {t:"Flexible. Life happens. People understand.",e:"🌿",s:{IN:2,BR:2,MX:2,CO:1,ES:1}},
+      {t:"Irrelevant. We arrive when we arrive.",e:"🐌",s:{GR:2,PT:2,AU:2,TH:1,IT:1}},
+    ]
+  },
+  {
+    q:"The landscape that stirs something deep in you…",
+    sub:"",
+    opts:[
+      {t:"Dramatic, raw, untamed wilderness",e:"🌋",s:{IS:2,NZ:2,NO:2,CA:1,FI:1}},
+      {t:"Warm coastlines and ancient, storied places",e:"🏛️",s:{GR:2,IT:2,PT:2,ES:1,TH:1}},
+      {t:"Dense, electric city energy — human possibility everywhere",e:"🌆",s:{SG:2,KR:2,FR:1,JP:1,DE:1}},
+      {t:"Lush nature with a spiritual stillness",e:"🌿",s:{BT:2,TH:2,IN:2,CO:1,NZ:1}},
+    ]
+  },
+  {
+    q:"Before a big decision, you…",
+    sub:"",
+    opts:[
+      {t:"Research everything. Build a plan. Execute.",e:"📋",s:{DE:2,SG:2,CH:2,JP:2,KR:1}},
+      {t:"Trust your gut and move before you overthink",e:"⚡",s:{AU:2,BR:2,AR:2,CO:1,IS:1}},
+      {t:"Talk to family or close friends — they know you",e:"👨‍👩‍👧",s:{MX:2,IN:2,IT:2,GR:1,BR:1}},
+      {t:"Sit with it in solitude until clarity arrives",e:"🧘",s:{FI:2,IS:2,BT:2,NO:1,NZ:1}},
+    ]
+  },
+  {
+    q:"Your home is…",
+    sub:"What does your space reveal about you?",
+    opts:[
+      {t:"Minimal. Every object earns its place.",e:"✨",s:{JP:2,DE:2,SE:2,FI:1,NL:1}},
+      {t:"Warm and chaotic — full of people and noise",e:"🎊",s:{BR:2,MX:2,IN:2,CO:1,IT:1}},
+      {t:"Carefully curated — beauty in every corner",e:"🖼️",s:{FR:2,IT:2,PT:2,GR:1,ES:1}},
+      {t:"Functional. I'm happiest when I'm outside.",e:"🏕️",s:{AU:2,NZ:2,NO:1,CA:1,IS:1}},
+    ]
+  },
+  {
+    q:"The quality you most admire in others…",
+    sub:"",
+    opts:[
+      {t:"Honesty, even when it's uncomfortable",e:"🎯",s:{FI:2,DE:2,NL:2,IS:1,SE:1}},
+      {t:"Warmth and unconditional generosity",e:"💛",s:{MX:2,BR:2,CO:2,TH:1,IN:1}},
+      {t:"Quiet elegance and sharp intelligence",e:"💎",s:{FR:2,SG:2,JP:1,IT:1,KR:1}},
+      {t:"Depth — the kind that comes from having truly lived",e:"🌊",s:{IN:2,BT:2,AR:2,PT:1,GR:1}},
+    ]
+  },
+  {
+    q:"Your relationship with rules…",
+    sub:"",
+    opts:[
+      {t:"Rules exist for good reason. I follow them.",e:"📐",s:{DE:2,JP:2,SG:2,CH:2,KR:1}},
+      {t:"I follow the spirit, not the letter",e:"🤝",s:{CA:2,NL:2,SE:2,AU:1,NO:1}},
+      {t:"Rules are guidelines made by people who never really lived",e:"😏",s:{IT:2,GR:2,AR:2,BR:1,MX:1}},
+      {t:"I make my own, quietly and completely",e:"🗻",s:{IS:2,FI:2,NZ:2,BT:1,NO:1}},
+    ]
+  },
+  {
+    q:"You feel most alive when…",
+    sub:"",
+    opts:[
+      {t:"Working with deep focus on something that takes real skill",e:"🔨",s:{JP:2,DE:2,CH:1,KR:1,SE:1}},
+      {t:"Surrounded by music, food, and people I love",e:"🎵",s:{BR:2,MX:2,ES:2,CO:1,IT:1}},
+      {t:"Discovering something unexpected, beautiful, or strange",e:"🔭",s:{FR:2,IT:2,PT:2,IN:1,GR:1}},
+      {t:"Completely alone in nature. No destination. No agenda.",e:"🌲",s:{IS:2,FI:2,NO:2,NZ:1,CA:1}},
+    ]
+  },
+  {
+    q:"Success, to you, ultimately means…",
+    sub:"The thing you'd choose if no one was watching",
+    opts:[
+      {t:"Mastery — being genuinely excellent at something",e:"🏆",s:{JP:2,DE:2,CH:2,SG:2,KR:1}},
+      {t:"Freedom — to live entirely on your own terms",e:"🦅",s:{IS:2,AU:2,NZ:2,BT:2,AR:1}},
+      {t:"Connection — rich relationships and deep belonging",e:"❤️",s:{BR:2,MX:2,IT:2,GR:1,CO:1}},
+      {t:"Balance — a good life, with enough for everyone",e:"⚖️",s:{SE:2,NO:2,NL:2,CA:1,FI:1}},
+    ]
+  },
+];
+
+// Static fallback descriptions per country
+const FALLBACKS = {
+  JP:"You see the world the way a Japanese craftsman sees their work — nothing is finished until it's right, and even then, you look for what can be refined. The Japanese concept of Wabi-sabi is your secret philosophy: you find beauty not in perfection but in the honest marks that time and use leave behind. Tokyo is waiting to show you a city where excellence is not ambition — it's simply respect.",
+  IS:"Þetta reddast — 'it'll all work out' — is Iceland's national motto, and it's somehow already yours. You don't force outcomes; you trust the process with the quiet confidence of someone who has learned that the wildest landscapes belong to those patient enough to wait for them. Iceland's volcanoes and aurora skies are ready for someone who isn't afraid to stand alone in something immense.",
+  BR:"You carry the Brazilian gift of Gostoso — that exuberant, unashamed love of being alive — in everything you do. You are the person who makes strangers feel like friends before the first song ends, the one who knows instinctively that joy is not something you wait for, but something you make. Rio's hills and Amazon's heartbeat are calling your name.",
+  DE:"Your mind works like a beautifully engineered machine — you have Fingerspitzengefühl, that German intuition for what's precise, what's honest, what's built to last. You don't cut corners and you don't understand people who do. Germany's medieval forests and modernist museums are made for someone who believes that doing something right is its own reward.",
+  IT:"Dolce far niente — the sweetness of doing nothing — is not laziness to you, it's philosophy. You believe, as Italians do, that a beautiful meal, a long conversation, and a perfect glass of wine are not indulgences: they are the entire point. Italy's light on old stone is waiting for someone who finally understands that pleasure is not something to be earned.",
+  NO:"You practice Friluftsliv — open-air living as a way of being — whether or not you know the word. There is something in you that only opens fully in cold wind and wide sky, that finds crowds exhausting and mountains restorative. Norway's fjords don't make people feel small; they make people feel exactly the right size.",
+  IN:"You carry Jugaad in your bones — that Indian genius for creative solutions under impossible constraints, for finding a way when no map exists. Your mind doesn't simplify complexity; it embraces it, turns it, finds the beauty in its contradictions. India will break your categories and rebuild you as something larger.",
+  NL:"You have Gezelligheid in your soul — that Dutch art of making any space feel warm, any stranger feel welcome, any evening feel like it matters. You are refreshingly, sometimes startlingly direct, and you believe deeply that pragmatism and idealism are not opposites. Amsterdam is waiting for someone who rides a bicycle through life without taking themselves too seriously.",
+  NZ:"Kia kaha — be strong, remain strong — is not a performance for you; it's how you simply operate. You have the New Zealander's gift for humility in the face of genuine enormity, for doing extraordinary things without needing anyone to notice. New Zealand's landscapes don't ask you to admire them — they ask you to come in.",
+  CH:"You live by the Swiss standard of Gemütlichkeit — a deep, unhurried contentment that has nothing to do with luxury and everything to do with quality. You value excellence not to impress but because settling feels like a kind of dishonesty. Switzerland's Alps and clockwork cities were made for someone who believes that doing something badly is simply not an option.",
+  PT:"Saudade is your native emotional language — that Portuguese feeling of longing for something beautiful that has already passed, or may never have existed at all. You find melancholy not depressing but profound, and you carry your depths quietly. Portugal's golden light and crumbling tiles are waiting for someone who knows that beautiful things are made more beautiful by time.",
+  FR:"You are a Flâneur — someone who wanders through life with philosophical purpose, noticing what others walk past, turning observation into insight. You believe, as France does, that how you eat, how you dress, and how you think are all forms of self-expression worth taking seriously. Paris is not a city for everyone, but it is absolutely a city for you.",
+  AU:"No worries — and you genuinely mean it. You carry the Australian gift of not catastrophising, of trusting that things tend to work out if you don't grip them too tightly. You are most yourself when you are outside, unhurried, slightly irreverent, and comfortable with the fact that you don't need to impress anyone. Australia's red earth and infinite coast are calling.",
+  CA:"You are quietly made of multitudes — comfortable with contradiction, instinctively generous, genuinely curious about people who think differently than you do. Canada shaped you before you ever set foot there: the belief that a place can be made of many peoples and still be one thing, that cold air and vast forests teach a particular kind of patience. This is where you belong.",
+  BT:"You measure life not in achievements but in moments of genuine presence — which is exactly how Bhutan measures its Gross National Happiness. You understand, with a clarity most people spend decades reaching, that wealth and wellbeing are not the same thing. Bhutan's mountain monasteries are waiting for someone who already knows what they're looking for.",
+  FI:"You have Sisu — that Finnish inner strength that doesn't announce itself, that simply endures, that keeps going through the cold without needing applause. You are honest to the point of discomfort and you find small talk almost physically exhausting. Finland's silence, its saunas, and its northern light were made for someone who prefers depth to volume.",
+  ES:"You live for the Madrugada — those charged, magical hours between midnight and dawn when conversations go deeper and music matters more. You are someone who brings full presence to everything, who finds moderation slightly suspicious, who believes that the only way to do something is with feeling. Spain's flamenco and its summer nights are made for your particular intensity.",
+  KR:"You carry Han — that Korean quality of deep sorrow transformed quietly into extraordinary drive. You demand the best from yourself and from life, not out of anxiety but out of a profound respect for your own potential. South Korea's breakneck ambition and ancient temples are two sides of the same coin — and so are you.",
+  MX:"You carry Querencia in your bones — that Mexican sense of the place, or state of being, where you are most fully yourself. You love hard, you feed people before you're asked, and you know instinctively that family — by blood or by choice — is the only real infrastructure that matters. Mexico is waiting to feel like home.",
+  GR:"You practice Meraki in everything you do — that Greek quality of putting your soul into your work, your meals, your conversations, refusing to do anything halfway. You believe, with the confidence of a civilisation that invented philosophy, that the examined life is the only one worth living. Greece's light and its ruins are made for someone who takes time seriously.",
+  AR:"You feel things the way Argentina does — completely, passionately, and without apology. La grieta runs through you: you are full of contradictions, of fire and depth, of elegance and grit, and you would not reduce yourself even if you could. Buenos Aires is waiting for someone who dances tango not as performance but as honest conversation.",
+  SG:"You share Singapore's rare gift of Kiasu — that hunger to never miss what matters — channelled not into anxiety but into relentless, focused excellence. You are efficient without being cold, ambitious without losing warmth, and you see no contradiction in being rigorously prepared and genuinely open to everyone. Singapore's skyline was built for minds like yours.",
+  CO:"You carry the Colombian spirit of Rumba — the deep understanding that celebration is not frivolous but radical, that joy in hard circumstances is its own form of courage. You bring warmth to rooms before you've said a word, and you find a way to make unexpected things beautiful. Colombia's mountains and colour are waiting for someone who makes the world brighter.",
+  TH:"You embody Sanuk — the Thai conviction that life should, at its core, be enjoyable, and that grace and hospitality are not performances but ways of being. You move through difficulty with a lightness that others mistake for not caring, when in fact you care deeply — you've simply learned that suffering loudly helps no one. Thailand's temples and markets are made for your quiet presence.",
+  SE:"You live by Lagom — that Swedish art of just the right amount. Not too much, not too little. You believe in beautiful design, in equality as instinct, in saying what you mean and meaning exactly what you say. You find excess wasteful and balance genuinely beautiful. Sweden's clean lines and dark winter light are made for someone who knows that moderation is its own kind of mastery.",
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let qIndex = 0;
+let scores = {};
+let answers = [];
+let selectedOpt = null;
+let resultCountry = null;
+
+// ═══════════════════════════════════════════════
+// QUIZ LOGIC
+// ═══════════════════════════════════════════════
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.style.display = 'none';
+    s.style.opacity = 0;
+  });
+  const el = document.getElementById(id);
+  el.style.display = 'flex';
+  requestAnimationFrame(() => {
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = 'fadeIn .5s ease forwards';
+  });
+}
+
+function startQuiz() {
+  qIndex = 0; scores = {}; answers = []; selectedOpt = null;
+  renderDots(); renderQuestion();
+  showScreen('quiz');
+  document.getElementById('progress-fill').style.width = '0%';
+}
+
+function retake() {
+  startQuiz();
+}
+
+function renderDots() {
+  const container = document.getElementById('q-dots');
+  container.innerHTML = QUESTIONS.map((_, i) => 
+    `<div class="q-dot ${i < qIndex ? 'done' : i === qIndex ? 'active' : ''}"></div>`
+  ).join('');
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[qIndex];
+  document.getElementById('q-num').textContent = `Question ${qIndex + 1} of ${QUESTIONS.length}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('q-sub').textContent = q.sub || '';
+  document.getElementById('q-sub').style.display = q.sub ? 'block' : 'none';
+  
+  const optsEl = document.getElementById('q-opts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.style.animationDelay = `${i * 0.06}s`;
+    btn.style.animation = 'slideUp .4s both';
+    btn.innerHTML = `<span class="opt-emoji">${opt.e}</span><span class="opt-text">${opt.t}</span>`;
+    btn.onclick = () => pickOption(opt, btn);
+    optsEl.appendChild(btn);
+  });
+  
+  document.getElementById('progress-fill').style.width = `${(qIndex / QUESTIONS.length) * 100}%`;
+}
+
+function pickOption(opt, btnEl) {
+  if (selectedOpt) return;
+  selectedOpt = opt;
+  
+  // Highlight selection
+  document.querySelectorAll('.opt-btn').forEach(b => {
+    b.disabled = true;
+    b.style.opacity = b === btnEl ? '1' : '0.45';
+  });
+  btnEl.classList.add('selected');
+  
+  // Accumulate scores
+  Object.entries(opt.s).forEach(([k, v]) => {
+    scores[k] = (scores[k] || 0) + v;
+  });
+  answers.push(opt.t);
+  
+  setTimeout(() => {
+    selectedOpt = null;
+    if (qIndex < QUESTIONS.length - 1) {
+      qIndex++;
+      renderDots();
+      renderQuestion();
+    } else {
+      finishQuiz();
+    }
+  }, 420);
+}
+
+function finishQuiz() {
+  // Find winner
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const winCode = sorted[0][0];
+  resultCountry = COUNTRIES[winCode];
+  
+  // Show loading
+  document.getElementById('l-emoji').textContent = resultCountry.emoji;
+  document.getElementById('l-country').textContent = resultCountry.name;
+  showScreen('loading');
+  document.getElementById('progress-fill').style.width = '100%';
+  
+  // Build result while loading
+  buildResult(winCode, sorted);
+}
+
+async function buildResult(code, sorted) {
+  const c = COUNTRIES[code];
+  
+  // Set up result UI
+  document.getElementById('r-flag').textContent = c.emoji;
+  document.getElementById('r-country').textContent = c.name;
+  document.getElementById('r-word').textContent = c.word;
+  document.getElementById('r-wdef').textContent = c.wdef;
+  
+  const traitsEl = document.getElementById('r-traits');
+  traitsEl.innerHTML = [c.t1, c.t2, c.t3].map(t => `<div class="r-trait">${t}</div>`).join('');
+  
+  // Background gradient
+  const bg = document.getElementById('result-bg');
+  bg.style.background = `linear-gradient(145deg, ${c.c1} 0%, ${c.c2} 60%, #07080c 100%)`;
+  
+  // Get AI description
+  const aiEl = document.getElementById('r-ai');
+  aiEl.textContent = 'Analysing your answers…';
+  
+  try {
+    const text = await getAIDescription(code, sorted);
+    aiEl.textContent = text;
+  } catch(e) {
+    aiEl.textContent = FALLBACKS[code] || `Your soul resonates with ${c.name}.`;
+  }
+  
+  // Render share card in background
+  renderShareCanvas();
+  
+  // Show result
+  setTimeout(() => showScreen('result'), 200);
+}
+
+async function getAIDescription(code, sorted) {
+  const c = COUNTRIES[code];
+  const K = window.GQ_API_KEY || '';
+  
+  if (!K) return FALLBACKS[code] || '';
+  
+  const runnerUp = sorted[1] ? COUNTRIES[sorted[1][0]] : null;
+  const prompt = `A user took a geographic personality quiz and matched to ${c.name}.
+
+Their 10 answers were:
+${QUESTIONS.map((q, i) => `"${q.q.slice(0,40)}…" → "${answers[i]}"`).join('\n')}
+${runnerUp ? `\nTheir second-closest match was ${runnerUp.name}.` : ''}
+
+Write exactly 3 sentences (second person, "You…") that:
+1. Reveal one specific, non-obvious reason why they ARE ${c.name} — reference a real cultural concept or untranslatable quality
+2. Weave in the word "${c.word}" (meaning: ${c.wdef}) as if it's always been their word
+3. End with one beautiful, specific invitation to visit — not generic tourism, something sensory
+
+Tone: poetic but precise. Make them feel genuinely seen, not flattered. No clichés. Max 75 words.`;
+
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','x-api-key':K,'anthropic-version':'2023-06-01'},
+    body: JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:prompt}]})
+  });
+  const d = await r.json();
+  return d.content?.[0]?.text || FALLBACKS[code] || '';
+}
+
+// ═══════════════════════════════════════════════
+// SHARE CARD
+// ═══════════════════════════════════════════════
+
+function renderShareCanvas() {
+  const c = resultCountry;
+  if (!c) return;
+  
+  const canvas = document.getElementById('share-canvas');
+  canvas.width = 1080; canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, 1080, 1080);
+  grad.addColorStop(0, c.c1);
+  grad.addColorStop(0.6, c.c2);
+  grad.addColorStop(1, '#07080c');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1080, 1080);
+  
+  // Dark vignette overlay
+  const vig = ctx.createRadialGradient(540, 540, 200, 540, 540, 760);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.6)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, 1080, 1080);
+  
+  // Subtle grid texture
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 1080; i += 60) {
+    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,1080); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(1080,i); ctx.stroke();
+  }
+  
+  // Top accent line
+  const accent = ctx.createLinearGradient(0, 0, 1080, 0);
+  accent.addColorStop(0, 'transparent');
+  accent.addColorStop(0.5, '#00d4c8');
+  accent.addColorStop(1, 'transparent');
+  ctx.fillStyle = accent;
+  ctx.fillRect(0, 0, 1080, 3);
+  
+  // Eyebrow text
+  ctx.font = 'bold 28px "DM Sans", sans-serif';
+  ctx.letterSpacing = '0.2em';
+  ctx.fillStyle = 'rgba(0,212,200,0.9)';
+  ctx.textAlign = 'center';
+  ctx.fillText('MY GEOGRAPHIC SOUL IS', 540, 120);
+  
+  // Flag emoji (big)
+  ctx.font = '260px serif';
+  ctx.fillText(c.emoji, 540, 480);
+  
+  // Country name
+  ctx.font = 'bold 110px "Playfair Display", Georgia, serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(c.name, 540, 620);
+  
+  // Word + def
+  ctx.font = 'italic bold 36px "Playfair Display", Georgia, serif';
+  ctx.fillStyle = 'rgba(0,212,200,0.9)';
+  ctx.fillText(c.word, 540, 690);
+  ctx.font = '28px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillText(c.wdef, 540, 730);
+  
+  // Traits
+  ctx.font = 'bold 24px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  const traits = [c.t1, c.t2, c.t3];
+  const traitStr = traits.join('  ·  ');
+  ctx.fillText(traitStr, 540, 820);
+  
+  // Site URL
+  ctx.font = '26px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fillText('trivia.azurenexus.com/soul', 540, 1020);
+  
+  // GeoQuest logo text
+  ctx.font = 'bold 26px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(0,212,200,0.6)';
+  ctx.textAlign = 'left';
+  ctx.fillText('GeoQuest', 48, 1020);
+  
+  // Scale canvas display
+  canvas.style.width = '100%';
+  canvas.style.height = 'auto';
+}
+
+function openShare() {
+  renderShareCanvas();
+  document.getElementById('share-title').textContent = `Your Soul: ${resultCountry.name} ${resultCountry.emoji}`;
+  document.getElementById('share-preview').classList.add('open');
+}
+
+function closeShare() {
+  document.getElementById('share-preview').classList.remove('open');
+}
+
+function downloadCard() {
+  const canvas = document.getElementById('share-canvas');
+  const link = document.createElement('a');
+  link.download = `my-soul-${resultCountry.name.toLowerCase().replace(/\s/g,'-')}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function copyText() {
+  const c = resultCountry;
+  const text = `My geographic soul is ${c.name} ${c.emoji}\n\n"${c.word}" — ${c.wdef}\n\nDiscover yours → trivia.azurenexus.com/soul`;
+  navigator.clipboard?.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy Link', 2000);
+  });
+}
+
+// Close share on backdrop click
+document.getElementById('share-preview').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeShare();
+});
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeShare();
+});
+
+// Try to get API key from parent window
+try {
+  if (window.parent && window.parent.GQ_API_KEY) {
+    window.GQ_API_KEY = window.parent.GQ_API_KEY;
+  }
+} catch(e) {}
+</script>
+</body>
+</html>
