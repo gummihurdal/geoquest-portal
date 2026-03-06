@@ -496,17 +496,17 @@ async function buildResult(code, sorted) {
   // Set up result UI
   // Show real flag image
   const flagEl = document.getElementById('r-flag');
-  const code = COUNTRY_CODES[c.name];
-  if (code) {
+  const flagCode = COUNTRY_CODES[c.name];
+  if (flagCode) {
     flagEl.innerHTML = '';
     const img = document.createElement('img');
-    img.src = `https://flagcdn.com/w320/${code}.png`;
+    img.src = `https://flagcdn.com/w320/${flagCode}.png`;
     img.alt = c.name;
     img.style.cssText = '';
     img.onerror = () => { flagEl.innerHTML = `<span class="flag-emoji">${c.emoji}</span>`; };
     flagEl.appendChild(img);
   } else {
-    flagEl.textContent = c.emoji;
+    flagEl.innerHTML = `<span class="flag-emoji">${c.emoji}</span>`;
   }
   document.getElementById('r-country').textContent = c.name;
   document.getElementById('r-word').textContent = c.word;
