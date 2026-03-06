@@ -474,9 +474,11 @@ function pickOption(opt, btnEl) {
   }, 420);
 }
 
+const MAX_SCORES = {"DE":18,"NL":11,"CH":11,"FI":16,"SE":11,"JP":16,"TH":6,"CA":8,"KR":10,"IT":18,"ES":9,"GR":15,"AR":10,"BR":16,"IS":17,"NO":15,"AU":11,"NZ":12,"PT":10,"MX":14,"FR":9,"SG":13,"CO":10,"IN":11,"BT":9};
 function finishQuiz() {
-  // Find winner
-  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  // Find winner — normalize by max possible score so all countries compete fairly
+  const normalized = Object.entries(scores).map(([k, v]) => [k, v / (MAX_SCORES[k] || 1)]);
+  const sorted = normalized.sort((a, b) => b[1] - a[1]);
   const winCode = sorted[0][0];
   resultCountry = COUNTRIES[winCode];
   
