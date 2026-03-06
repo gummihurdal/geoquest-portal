@@ -531,7 +531,7 @@ async function buildResult(code, sorted) {
   }
   
   // Render share card in background
-  await renderShareCanvas();
+  renderShareCanvas().catch(()=>{}); // non-blocking
   
   // Show result
   setTimeout(() => showScreen('result'), 200);
@@ -721,7 +721,7 @@ async function renderShareCanvas() {
   canvas.style.height = 'auto';
 }
 
-function openShare() {
+async function openShare() {
   await renderShareCanvas();
   document.getElementById('share-title').textContent = `Your Soul: ${resultCountry.name} ${resultCountry.emoji}`;
   document.getElementById('share-preview').classList.add('open');
