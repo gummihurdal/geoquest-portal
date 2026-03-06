@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Country — Community Results · GeoQuest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#07080c;--bg2:#0d0f18;
+  --teal:#00d4c8;--blue:#0099ee;
+  --text:rgba(255,255,255,0.92);--muted:rgba(255,255,255,0.45);--dim:rgba(255,255,255,0.08);
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans',system-ui,sans-serif;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;}
+
+/* NAV */
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(7,8,12,0.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.back{display:flex;align-items:center;gap:7px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;}
+.back:hover{color:#fff;}
+.back svg{width:15px;height:15px;flex-shrink:0;}
+.topbar-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:#fff;}
+.topbar-right{display:flex;gap:10px;}
+.try-btn{background:linear-gradient(135deg,var(--teal),var(--blue));color:#07080c;font-weight:800;font-size:13px;padding:8px 20px;border-radius:100px;border:none;cursor:pointer;text-decoration:none;transition:transform .2s;}
+.try-btn:hover{transform:translateY(-1px);}
+
+/* HERO */
+.hero{padding:100px 1.5rem 3rem;text-align:center;max-width:640px;margin:0 auto;}
+.hero-eye{font-size:11px;font-weight:700;letter-spacing:.25em;color:var(--teal);text-transform:uppercase;margin-bottom:1rem;}
+.hero h1{font-family:var(--font-display);font-size:clamp(2rem,6vw,3.2rem);font-weight:900;line-height:1.1;margin-bottom:.8rem;}
+.hero h1 em{font-style:italic;color:var(--teal);}
+.hero p{color:var(--muted);font-size:16px;line-height:1.7;margin-bottom:2rem;}
+.stats-row{display:flex;gap:2rem;justify-content:center;margin-bottom:1rem;}
+.stat{text-align:center;}
+.stat-n{font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:#fff;}
+.stat-l{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.05em;}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 1.5rem 2rem;max-width:900px;margin:0 auto;}
+.filter-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:var(--font-body);font-size:13px;font-weight:600;padding:7px 16px;border-radius:100px;cursor:pointer;transition:all .15s;}
+.filter-btn:hover,.filter-btn.active{background:rgba(0,212,200,0.1);border-color:rgba(0,212,200,0.4);color:#fff;}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;padding:0 1.5rem 4rem;max-width:1100px;margin:0 auto;}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:1.4rem;transition:transform .2s,border-color .2s;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,212,200,0.3),transparent);opacity:0;transition:opacity .2s;}
+.card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,0.14);}
+.card:hover::before{opacity:1;}
+.card-flag{font-size:2.8rem;line-height:1;margin-bottom:.8rem;display:block;}
+.card-country{font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:#fff;margin-bottom:.25rem;}
+.card-word{font-size:12px;font-style:italic;color:var(--teal);margin-bottom:.8rem;}
+.card-meta{display:flex;align-items:center;justify-content:space-between;}
+.card-user{font-size:12px;color:var(--muted);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;}
+.card-user strong{color:rgba(255,255,255,0.7);}
+.card-time{font-size:11px;color:rgba(255,255,255,0.25);}
+
+/* EMPTY / LOADING */
+.state{text-align:center;padding:5rem 1.5rem;color:var(--muted);}
+.state .big{font-size:3rem;margin-bottom:1rem;}
+.spinner{width:36px;height:36px;border-radius:50%;border:2px solid rgba(0,212,200,0.15);border-top-color:var(--teal);animation:spin 1s linear infinite;margin:0 auto 1rem;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.card{animation:fadeUp .35s ease both;}
+
+/* TOP COUNTRIES */
+.top-section{max-width:1100px;margin:0 auto;padding:0 1.5rem 2.5rem;}
+.section-label{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
+.top-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.top-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:100px;padding:8px 16px;cursor:pointer;transition:all .15s;}
+.top-pill:hover{background:rgba(255,255,255,0.09);}
+.top-pill .pill-flag{font-size:18px;}
+.top-pill .pill-name{font-size:13px;font-weight:600;color:rgba(255,255,255,0.8);}
+.top-pill .pill-count{font-size:12px;color:var(--teal);font-weight:700;}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      GeoQuest
+    </a>
+    <span style="color:rgba(255,255,255,0.15)">·</span>
+    <span class="topbar-title">Community Results</span>
+  </div>
+  <a href="/soul.html" class="try-btn">Take the Quiz →</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-eye">Your Country · Community</div>
+  <h1>Where does the<br>world <em>belong?</em></h1>
+  <p>Everyone who took the quiz and shared their result.<br>Which country comes up most?</p>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-n" id="total-count">—</div><div class="stat-l">Results Posted</div></div>
+    <div class="stat"><div class="stat-n" id="country-count">—</div><div class="stat-l">Countries Matched</div></div>
+  </div>
+</div>
+
+<div class="top-section" id="top-section" style="display:none">
+  <div class="section-label">Most common matches</div>
+  <div class="top-pills" id="top-pills"></div>
+</div>
+
+<div class="filters" id="filter-row"></div>
+
+<div id="grid-container">
+  <div class="state"><div class="spinner"></div><p>Loading results…</p></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mjphpctvuxmbjhmcscoj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qcGhwY3R2dXhtYmpobWNzY29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMjgzMzQsImV4cCI6MjA4NzgwNDMzNH0.dsmzK7SS4_RSC5wbN6ifhjRlOSbfDZjIcfh2MKkDQIs';
+
+let allResults = [];
+let activeFilter = null;
+
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - new Date(ts)) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s/60)}m ago`;
+  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+  if (s < 604800) return `${Math.floor(s/86400)}d ago`;
+  return new Date(ts).toLocaleDateString('en', {month:'short', day:'numeric'});
+}
+
+async function loadResults() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/soul_results?select=*&order=created_at.desc&limit=200`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    allResults = await res.json();
+    render();
+  } catch(e) {
+    document.getElementById('grid-container').innerHTML =
+      `<div class="state"><div class="big">😔</div><p>Couldn't load results.<br>Try refreshing.</p></div>`;
+  }
+}
+
+function render() {
+  const filtered = activeFilter
+    ? allResults.filter(r => r.country === activeFilter)
+    : allResults;
+
+  // Stats
+  const unique = new Set(allResults.map(r => r.country)).size;
+  document.getElementById('total-count').textContent = allResults.length.toLocaleString();
+  document.getElementById('country-count').textContent = unique;
+
+  // Top countries
+  const counts = {};
+  allResults.forEach(r => counts[r.country] = (counts[r.country]||0)+1);
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const topSection = document.getElementById('top-section');
+  const topPills = document.getElementById('top-pills');
+  if (top.length) {
+    topSection.style.display = 'block';
+    topPills.innerHTML = top.map(([country, n]) => {
+      const emoji = allResults.find(r=>r.country===country)?.country_emoji || '🌍';
+      return `<div class="top-pill" onclick="setFilter('${country}')">
+        <span class="pill-flag">${emoji}</span>
+        <span class="pill-name">${country}</span>
+        <span class="pill-count">${n}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Filter buttons
+  const filterRow = document.getElementById('filter-row');
+  const countries = [...new Set(allResults.map(r=>r.country))].sort();
+  filterRow.innerHTML = `<button class="filter-btn ${!activeFilter?'active':''}" onclick="setFilter(null)">All</button>` +
+    countries.map(c => {
+      const emoji = allResults.find(r=>r.country===c)?.country_emoji||'';
+      return `<button class="filter-btn ${activeFilter===c?'active':''}" onclick="setFilter('${c}')">${emoji} ${c}</button>`;
+    }).join('');
+
+  // Grid
+  const container = document.getElementById('grid-container');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="state"><div class="big">🌍</div><p>No results yet${activeFilter?' for '+activeFilter:''}.<br><a href="/soul.html" style="color:var(--teal)">Be the first →</a></p></div>`;
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  grid.innerHTML = filtered.map((r, i) => `
+    <div class="card" style="animation-delay:${Math.min(i,20)*0.03}s">
+      <span class="card-flag">${r.country_emoji}</span>
+      <div class="card-country">${r.country}</div>
+      <div class="card-word">${r.word}</div>
+      <div class="card-meta">
+        <div class="card-user">${r.username ? `<strong>${r.username}</strong>` : '<span style="opacity:.4">Anonymous</span>'}</div>
+        <div class="card-time">${timeAgo(r.created_at)}</div>
+      </div>
+    </div>
+  `).join('');
+  container.innerHTML = '';
+  container.appendChild(grid);
+}
+
+function setFilter(country) {
+  activeFilter = country;
+  render();
+  window.scrollTo({top: 300, behavior:'smooth'});
+}
+
+loadResults();
+// Refresh every 30s for live feel
+setInterval(loadResults, 30000);
+</script>
+</body>
+</html>
