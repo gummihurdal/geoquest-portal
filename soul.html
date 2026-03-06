@@ -86,7 +86,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font-body);mi
 #result-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.4) 50%,rgba(0,0,0,0.25) 100%);}
 #result-content{position:relative;z-index:2;max-width:620px;margin:0 auto;animation:revealResult .8s .2s both;}
 #result .r-eyebrow{font-size:11px;font-weight:700;letter-spacing:.25em;color:rgba(0,212,200,.9);text-transform:uppercase;margin-bottom:1.5rem;}
-#result .r-flag{font-size:clamp(80px,18vw,130px);line-height:1;margin-bottom:1.2rem;display:block;animation:float 5s ease-in-out infinite;}
+#result .r-flag{margin-bottom:1.6rem;display:flex;justify-content:center;animation:float 5s ease-in-out infinite;} #result .r-flag img{width:200px;height:auto;border-radius:12px;border:2px solid rgba(255,255,255,0.18);box-shadow:0 12px 48px rgba(0,0,0,0.6);} #result .r-flag .flag-emoji{font-size:clamp(100px,22vw,140px);line-height:1;}
 #result .r-country{font-family:var(--font-display);font-size:clamp(2.8rem,10vw,5.5rem);font-weight:900;color:#fff;line-height:1;margin-bottom:.6rem;}
 #result .r-word{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:100px;padding:6px 20px;margin-bottom:2rem;}
 #result .r-word em{font-style:italic;font-weight:700;color:var(--teal);font-size:15px;}
@@ -494,7 +494,20 @@ async function buildResult(code, sorted) {
   const c = COUNTRIES[code];
   
   // Set up result UI
-  document.getElementById('r-flag').textContent = c.emoji;
+  // Show real flag image
+  const flagEl = document.getElementById('r-flag');
+  const code = COUNTRY_CODES[c.name];
+  if (code) {
+    flagEl.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = `https://flagcdn.com/w320/${code}.png`;
+    img.alt = c.name;
+    img.style.cssText = '';
+    img.onerror = () => { flagEl.innerHTML = `<span class="flag-emoji">${c.emoji}</span>`; };
+    flagEl.appendChild(img);
+  } else {
+    flagEl.textContent = c.emoji;
+  }
   document.getElementById('r-country').textContent = c.name;
   document.getElementById('r-word').textContent = c.word;
   document.getElementById('r-wdef').textContent = c.wdef;
@@ -518,11 +531,20 @@ async function buildResult(code, sorted) {
   }
   
   // Render share card in background
-  renderShareCanvas();
+  await renderShareCanvas();
   
   // Show result
   setTimeout(() => showScreen('result'), 200);
 }
+
+
+const COUNTRY_CODES = {
+  'Japan':'jp','Iceland':'is','Brazil':'br','Germany':'de','Italy':'it',
+  'Norway':'no','India':'in','Netherlands':'nl','New Zealand':'nz','Switzerland':'ch',
+  'Portugal':'pt','France':'fr','Australia':'au','Canada':'ca','Bhutan':'bt',
+  'Finland':'fi','Spain':'es','South Korea':'kr','Mexico':'mx','Greece':'gr',
+  'Argentina':'ar','Singapore':'sg','Colombia':'co','Thailand':'th','Sweden':'se'
+};
 
 async function getAIDescription(code, sorted) {
   const c = COUNTRIES[code];
@@ -557,7 +579,7 @@ Tone: poetic but precise. Make them feel genuinely seen, not flattered. No clich
 // SHARE CARD
 // ═══════════════════════════════════════════════
 
-function renderShareCanvas() {
+async function renderShareCanvas() {
   const c = resultCountry;
   if (!c) return;
   
@@ -603,29 +625,85 @@ function renderShareCanvas() {
   ctx.textAlign = 'center';
   ctx.fillText('MY GEOGRAPHIC SOUL IS', 540, 120);
   
-  // Flag emoji (big)
-  ctx.font = '260px serif';
-  ctx.fillText(c.emoji, 540, 480);
+  // Draw real flag image on canvas
+  await new Promise(resolve => {
+    const countryCode = COUNTRY_CODES[c.name];
+    if (!countryCode) {
+      // Fallback: draw emoji
+      ctx.font = '240px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(c.emoji, 540, 480);
+      resolve();
+      return;
+    }
+    const flagImg = new Image();
+    flagImg.crossOrigin = 'anonymous';
+    flagImg.onload = () => {
+      // Draw flag centered, max width 420px, with rounded rect clip
+      const fw = 420, fh = Math.round(420 * flagImg.height / flagImg.width);
+      const fx = (1080 - fw) / 2, fy = 260;
+      ctx.save();
+      // Rounded rect clip
+      const r = 18;
+      ctx.beginPath();
+      ctx.moveTo(fx+r, fy); ctx.lineTo(fx+fw-r, fy);
+      ctx.arcTo(fx+fw, fy, fx+fw, fy+r, r);
+      ctx.lineTo(fx+fw, fy+fh-r);
+      ctx.arcTo(fx+fw, fy+fh, fx+fw-r, fy+fh, r);
+      ctx.lineTo(fx+r, fy+fh);
+      ctx.arcTo(fx, fy+fh, fx, fy+fh-r, r);
+      ctx.lineTo(fx, fy+r);
+      ctx.arcTo(fx, fy, fx+r, fy, r);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(flagImg, fx, fy, fw, fh);
+      ctx.restore();
+      // Subtle border over flag
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(fx+r, fy); ctx.lineTo(fx+fw-r, fy);
+      ctx.arcTo(fx+fw, fy, fx+fw, fy+r, r);
+      ctx.lineTo(fx+fw, fy+fh-r);
+      ctx.arcTo(fx+fw, fy+fh, fx+fw-r, fy+fh, r);
+      ctx.lineTo(fx+r, fy+fh);
+      ctx.arcTo(fx, fy+fh, fx, fy+fh-r, r);
+      ctx.lineTo(fx, fy+r);
+      ctx.arcTo(fx, fy, fx+r, fy, r);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+      resolve();
+    };
+    flagImg.onerror = () => {
+      ctx.font = '200px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(c.emoji, 540, 480);
+      resolve();
+    };
+    flagImg.src = `https://flagcdn.com/w640/${countryCode}.png`;
+  });
   
   // Country name
-  ctx.font = 'bold 110px "Playfair Display", Georgia, serif';
+  ctx.font = 'bold 100px "Playfair Display", Georgia, serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(c.name, 540, 620);
+  ctx.fillText(c.name, 540, 650);
   
   // Word + def
-  ctx.font = 'italic bold 36px "Playfair Display", Georgia, serif';
+  ctx.font = 'italic bold 34px "Playfair Display", Georgia, serif';
   ctx.fillStyle = 'rgba(0,212,200,0.9)';
-  ctx.fillText(c.word, 540, 690);
-  ctx.font = '28px "DM Sans", sans-serif';
+  ctx.fillText(c.word, 540, 720);
+  ctx.font = '26px "DM Sans", sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fillText(c.wdef, 540, 730);
+  ctx.fillText(c.wdef, 540, 758);
   
   // Traits
-  ctx.font = 'bold 24px "DM Sans", sans-serif';
+  ctx.font = 'bold 22px "DM Sans", sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   const traits = [c.t1, c.t2, c.t3];
   const traitStr = traits.join('  ·  ');
-  ctx.fillText(traitStr, 540, 820);
+  ctx.fillText(traitStr, 540, 840);
   
   // Site URL
   ctx.font = '26px "DM Sans", sans-serif';
@@ -644,7 +722,7 @@ function renderShareCanvas() {
 }
 
 function openShare() {
-  renderShareCanvas();
+  await renderShareCanvas();
   document.getElementById('share-title').textContent = `Your Soul: ${resultCountry.name} ${resultCountry.emoji}`;
   document.getElementById('share-preview').classList.add('open');
 }
@@ -702,8 +780,12 @@ function buildShareModal() {
     <div style="background:#0d0f18;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:2rem;max-width:420px;width:100%;position:relative;">
       <button onclick="document.getElementById('share-modal').remove()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,0.3);font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="text-align:center;margin-bottom:1.5rem;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.2em;color:#00d4c8;text-transform:uppercase;margin-bottom:.5rem;">Share Your Result</div>
-        <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;">${c.emoji} ${c.name}</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.2em;color:#00d4c8;text-transform:uppercase;margin-bottom:.8rem;">Share Your Result</div>
+        <img src="https://flagcdn.com/w160/${COUNTRY_CODES[c.name]||'un'}.png" alt="${c.name}"
+          style="width:96px;height:auto;border-radius:8px;border:2px solid rgba(255,255,255,0.15);box-shadow:0 4px 20px rgba(0,0,0,0.5);margin-bottom:.7rem;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div style="display:none;font-size:56px;line-height:1;margin-bottom:.4rem;">${c.emoji}</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;">${c.name}</div>
         <div style="font-size:13px;color:rgba(255,255,255,0.4);font-style:italic;margin-top:.3rem;">${c.word}</div>
       </div>
 
@@ -801,10 +883,11 @@ function copyShareText(text, btn) {
   });
 }
 
-function downloadAndShare() {
+async function downloadAndShare() {
   const c = resultCountry;
   const canvas = document.getElementById('share-canvas');
   if (!canvas) return;
+  await renderShareCanvas();
   const link = document.createElement('a');
   link.download = `my-country-${c.name.toLowerCase().replace(/\s/g,'-')}.png`;
   link.href = canvas.toDataURL('image/png');
@@ -834,7 +917,7 @@ async function handlePost() {
     btn.style.color = '#00d4c8';
     btn.style.borderColor = 'rgba(0,212,200,0.4)';
     // Render share card then open share modal
-    renderShareCanvas();
+    await renderShareCanvas();
     setTimeout(buildShareModal, 300);
   } else {
     btn.textContent = '❌ Failed — try again';

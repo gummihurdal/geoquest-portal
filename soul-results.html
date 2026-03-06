@@ -52,7 +52,9 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font-body);mi
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,212,200,0.3),transparent);opacity:0;transition:opacity .2s;}
 .card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,0.14);}
 .card:hover::before{opacity:1;}
-.card-flag{font-size:2.8rem;line-height:1;margin-bottom:.8rem;display:block;}
+.card-flag-wrap{margin-bottom:.9rem;display:block;}.card-flag{margin-bottom:.9rem;display:block;}
+.card-flag img{width:72px;height:auto;border-radius:5px;border:1px solid rgba(255,255,255,0.12);box-shadow:0 2px 12px rgba(0,0,0,0.4);}
+.card-flag .flag-fb{font-size:2.8rem;line-height:1;}
 .card-country{font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:#fff;margin-bottom:.25rem;}
 .card-word{font-size:12px;font-style:italic;color:var(--teal);margin-bottom:.8rem;}
 .card-meta{display:flex;align-items:center;justify-content:space-between;}
@@ -74,7 +76,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font-body);mi
 .top-pills{display:flex;gap:8px;flex-wrap:wrap;}
 .top-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:100px;padding:8px 16px;cursor:pointer;transition:all .15s;}
 .top-pill:hover{background:rgba(255,255,255,0.09);}
-.top-pill .pill-flag{font-size:18px;}
+.top-pill .pill-flag{display:flex;align-items:center;}
 .top-pill .pill-name{font-size:13px;font-weight:600;color:rgba(255,255,255,0.8);}
 .top-pill .pill-count{font-size:12px;color:var(--teal);font-weight:700;}
 </style>
@@ -165,7 +167,7 @@ function render() {
     topPills.innerHTML = top.map(([country, n]) => {
       const emoji = allResults.find(r=>r.country===country)?.country_emoji || '🌍';
       return `<div class="top-pill" onclick="setFilter('${country}')">
-        <span class="pill-flag">${emoji}</span>
+        <span class="pill-flag">${flagImg(country, 24)}</span>
         <span class="pill-name">${country}</span>
         <span class="pill-count">${n}</span>
       </div>`;
@@ -192,7 +194,7 @@ function render() {
   grid.className = 'grid';
   grid.innerHTML = filtered.map((r, i) => `
     <div class="card" style="animation-delay:${Math.min(i,20)*0.03}s">
-      <span class="card-flag">${r.country_emoji}</span>
+      <div class="card-flag-wrap">${flagImg(r.country, 52)}</div>
       <div class="card-country">${r.country}</div>
       <div class="card-word">${r.word}</div>
       <div class="card-meta">
@@ -214,6 +216,23 @@ function setFilter(country) {
 loadResults();
 // Refresh every 30s for live feel
 setInterval(loadResults, 30000);
+
+const COUNTRY_CODES = {
+  'Japan':'jp','Iceland':'is','Brazil':'br','Germany':'de','Italy':'it',
+  'Norway':'no','India':'in','Netherlands':'nl','New Zealand':'nz','Switzerland':'ch',
+  'Portugal':'pt','France':'fr','Australia':'au','Canada':'ca','Bhutan':'bt',
+  'Finland':'fi','Spain':'es','South Korea':'kr','Mexico':'mx','Greece':'gr',
+  'Argentina':'ar','Singapore':'sg','Colombia':'co','Thailand':'th','Sweden':'se'
+};
+
+function flagImg(country, size=48) {
+  const code = COUNTRY_CODES[country];
+  if (!code) return `<span style="font-size:${size}px;line-height:1">${'🌍'}</span>`;
+  return `<img src="https://flagcdn.com/w${size*2}/${code}.png" 
+    style="width:${size}px;height:${Math.round(size*0.67)}px;object-fit:cover;border-radius:4px;border:1px solid rgba(255,255,255,0.12);display:block;"
+    onerror="this.style.display='none'" alt="${country} flag">`;
+}
+
 </script>
 </body>
 </html>
