@@ -22,3 +22,17 @@
 
 ---
 *Future releases will be added above this line.*
+
+## v1.1-soul-quiz — 2026-03-06 ✅ PRODUCTION
+**Tag:** `v1.1-soul-quiz`
+
+### Features
+- **Geographic Soul quiz** at `/soul.html`
+  - 10 deep personality questions (conflict, landscape, time, decision-making, etc.)
+  - 25 countries with untranslatable cultural words (Wabi-sabi, Saudade, Friluftsliv…)
+  - Claude AI-powered personal description (3 sentences, uniquely tailored)
+  - Static fallback descriptions for offline/no-API-key
+  - Shareable 1080×1080 image card (downloadable PNG, Instagram/TikTok ready)
+  - Copy-to-clipboard text with Wordle-style share format
+  - 🌍 Soul Quiz nav link in sidebar
+  - Standalone HTML — no React dependency, fast load
