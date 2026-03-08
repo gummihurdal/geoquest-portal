@@ -2334,7 +2334,11 @@ async function handleForgotPassword(){
   else { setAuthMsg('✉️ Reset link sent — check your email', false); }
 }
 async function handleSignOut(){
-  await sb.auth.signOut();
+  // Clear auth token directly to avoid lock contention with the React app
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+  } catch(e) {}
+  sb.auth.signOut().catch(()=>{}); // fire and forget — token already cleared
   currentUser=null;
   updateNavAuth(null);
   visited.clear();
