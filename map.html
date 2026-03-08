@@ -2329,6 +2329,22 @@ function updateURL(){
 // Hide entire app until we know the auth state
 document.getElementById('app').style.visibility = 'hidden';
 
+// Register listener FIRST to avoid race with magic link callback
+sb.auth.onAuthStateChange(async (event, session)=>{
+  if(event==='SIGNED_IN' && session?.user){
+    currentUser = session.user;
+    updateNavAuth(currentUser);
+    hideAuthModal();
+    document.getElementById('app').style.visibility = '';
+    await loadFromDb(currentUser.id);
+  } else if(event==='SIGNED_OUT'){
+    currentUser=null;
+    updateNavAuth(null);
+    document.getElementById('app').style.visibility = 'hidden';
+    showAuthModal(true);
+  }
+});
+
 (async ()=>{
   const {data:{session}} = await sb.auth.getSession();
   if(session?.user){
@@ -2340,21 +2356,6 @@ document.getElementById('app').style.visibility = 'hidden';
     // Not signed in — keep app hidden, show full auth wall
     showAuthModal(true);
   }
-
-  sb.auth.onAuthStateChange(async (event, session)=>{
-    if(event==='SIGNED_IN' && session?.user){
-      currentUser = session.user;
-      updateNavAuth(currentUser);
-      hideAuthModal();
-      document.getElementById('app').style.visibility = '';
-      await loadFromDb(currentUser.id);
-    } else if(event==='SIGNED_OUT'){
-      currentUser=null;
-      updateNavAuth(null);
-      document.getElementById('app').style.visibility = 'hidden';
-      showAuthModal(true);
-    }
-  });
 })();
 
 // Page is fully auth-gated — no search gate needed here
