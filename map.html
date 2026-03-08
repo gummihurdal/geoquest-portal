@@ -7,7 +7,30 @@
 <meta name="description" content="Track every country you've visited. Watch your globe come alive with a cinematic tour of your travels.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+// ── HERO DISMISS ──
+function dismissHero(){
+  const b=document.getElementById('hero-banner');
+  const sb=document.getElementById('hero-show-btn');
+  b.classList.add('collapsed');
+  setTimeout(()=>sb.classList.add('visible'),400);
+  try{localStorage.setItem('gq-hero-dismissed','1');}catch(e){}
+}
+function showHero(){
+  const b=document.getElementById('hero-banner');
+  const sb=document.getElementById('hero-show-btn');
+  b.classList.remove('collapsed');
+  sb.classList.remove('visible');
+}
+// Restore dismissed state
+try{
+  if(localStorage.getItem('gq-hero-dismissed')==='1'){
+    document.getElementById('hero-banner').classList.add('collapsed');
+    document.getElementById('hero-show-btn').classList.add('visible');
+  }
+}catch(e){}
+
+</script>
 <style>
 :root {
   --bg: #04060e;
@@ -61,7 +84,7 @@ html, body {
 }
 
 #panel-header {
-  padding: 20px 22px 16px;
+  padding: 16px 22px 14px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -593,9 +616,244 @@ html, body {
   #tour-card { width: calc(100vw - 24px); bottom: 12px; right: 12px; }
   #tour-toplabel h2 { font-size: 32px; }
 }
+
+/* ── NAV BAR ── */
+#topnav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: rgba(4,6,14,0.88);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border-bottom: 1px solid rgba(0,212,200,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 200;
+  gap: 12px;
+}
+#topnav-logo {
+  display: flex; align-items: center; gap: 9px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+#topnav-logo .nav-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg,#00d4c8 0%,#0099e6 100%);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+#topnav-logo span {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+#topnav-logo span em { color: var(--teal); font-style: normal; }
+.topnav-links {
+  display: flex; align-items: center; gap: 4px;
+  flex: 1;
+  justify-content: center;
+}
+.topnav-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+.topnav-link:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.topnav-link.active { background: rgba(0,212,200,0.1); color: var(--teal); }
+.topnav-link svg { width: 14px; height: 14px; opacity: 0.7; }
+.topnav-right {
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.topnav-cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  background: linear-gradient(135deg,#7c3aed,#5b21b6);
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s;
+}
+.topnav-cta:hover { opacity: 0.85; }
+
+/* ── HERO BANNER ── */
+#hero-banner {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg,#040a18 0%,#071427 60%,#050e1c 100%);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s;
+  max-height: 320px;
+  opacity: 1;
+}
+#hero-banner.collapsed { max-height: 0; opacity: 0; pointer-events: none; }
+.hero-bg-dots {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(0,212,200,0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+.hero-glow {
+  position: absolute; top: -60px; right: -40px;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, rgba(0,212,200,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative;
+  padding: 24px 24px 20px;
+  z-index: 1;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(0,212,200,0.08);
+  border: 1px solid rgba(0,212,200,0.18);
+  border-radius: 20px;
+  padding: 4px 10px 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--teal);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.hero-eyebrow span { font-size: 14px; }
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+.hero-title em { color: var(--teal); font-style: normal; }
+.hero-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 18px;
+  max-width: 310px;
+}
+.hero-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.hero-feature {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px;
+}
+.hf-icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.hf-text strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1px;
+}
+.hf-text span {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.hero-dismiss {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 11px;
+  color: var(--muted);
+  font-size: 11px; font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.hero-dismiss:hover { color: var(--text); border-color: var(--muted2); }
+#hero-show-btn {
+  display: none;
+  align-items: center; justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 11px; font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  margin: 10px 22px;
+  width: calc(100% - 44px);
+}
+#hero-show-btn.visible { display: flex; }
+#hero-show-btn:hover { color: var(--teal); border-color: rgba(0,212,200,0.3); }
+
+/* adjust panel top for topnav */
+
+
+#app {
+  margin-top: 52px;
+  height: calc(100vh - 52px);
+}
+#panel { height: 100%; }
+
 </style>
 </head>
 <body>
+
+<!-- ── TOP NAV ── -->
+<nav id="topnav">
+  <a href="/" id="topnav-logo">
+    <div class="nav-icon">🌍</div>
+    <span>Geo<em>Quest</em></span>
+  </a>
+  <div class="topnav-links">
+    <a href="/" class="topnav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="/guess" class="topnav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+      Guess Country
+    </a>
+    <a href="/leaderboard" class="topnav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      Rankings
+    </a>
+    <a href="/map.html" class="topnav-link active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      My World
+    </a>
+    <a href="/soul.html" class="topnav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Nation Match
+    </a>
+  </div>
+  <div class="topnav-right">
+    <a href="/" class="topnav-cta">▶ Play Now</a>
+  </div>
+</nav>
+
 <div id="app">
 
   <!-- ── PANEL ── -->
@@ -606,7 +864,53 @@ html, body {
       <p id="panel-sub">Add every country you've set foot in</p>
     </div>
 
-    <div id="search-wrap">
+    
+  <!-- ── HERO BANNER ── -->
+  <div id="hero-banner">
+    <div class="hero-bg-dots"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow"><span>🗺️</span> Travel Tracker</div>
+      <h2 class="hero-title">Map your <em>world</em></h2>
+      <p class="hero-desc">
+        Pin every country you've set foot in. Watch your personal globe come alive — then take a cinematic tour of your travels.
+      </p>
+      <div class="hero-features">
+        <div class="hero-feature">
+          <div class="hf-icon">🔍</div>
+          <div class="hf-text">
+            <strong>Search &amp; Add</strong>
+            <span>Type any country name to pin it on your globe instantly</span>
+          </div>
+        </div>
+        <div class="hero-feature">
+          <div class="hf-icon">📊</div>
+          <div class="hf-text">
+            <strong>Track Progress</strong>
+            <span>See what % of the world you've explored, by continent</span>
+          </div>
+        </div>
+        <div class="hero-feature">
+          <div class="hf-icon">🎬</div>
+          <div class="hf-text">
+            <strong>World Tour</strong>
+            <span>Animated flyby of every country you've visited</span>
+          </div>
+        </div>
+        <div class="hero-feature">
+          <div class="hf-icon">🔗</div>
+          <div class="hf-text">
+            <strong>Share It</strong>
+            <span>Copy a link and show friends your travel map</span>
+          </div>
+        </div>
+      </div>
+      <button class="hero-dismiss" onclick="dismissHero()">✕ Got it, start exploring</button>
+    </div>
+  </div>
+  <button id="hero-show-btn" onclick="showHero()">ℹ️ How it works</button>
+
+<div id="search-wrap">
       <input type="text" id="search" placeholder="Search countries…" autocomplete="off" spellcheck="false">
       <div id="suggestions"></div>
     </div>
@@ -997,7 +1301,7 @@ const FACTS = {
   {emoji:"🔵",headline:"Azulejo tiles have covered Portuguese buildings since the 15th century",detail:"Portugal's distinctive blue and white ceramic tiles were introduced from the Moorish Iberian tradition. The 2.3 million azulejo tiles in Porto's São Bento railway station took 11 years to paint."},
 ],
 "Switzerland":[
-  {emoji:"⌚",headline:"Switzerland makes $23 billion in watches per year — 50% of global exports",detail:"Switzerland exports 95% of the watches it makes. Despite making fewer than 10% of global watch units, it earns 60% of global watch revenue. Swatch Group, Rolex, and Patek Philippe are all Swiss."},
+  {emoji:"⌚",headline":"Switzerland makes $23 billion in watches per year — 50% of global exports",detail:"Switzerland exports 95% of the watches it makes. Despite making fewer than 10% of global watch units, it earns 60% of global watch revenue. Swatch Group, Rolex, and Patek Philippe are all Swiss."},
   {emoji:"🏔️",headline:"Switzerland has 4 national languages and 26 cantons with their own laws",detail:"German (63%), French (23%), Italian (8%), and Romansh are all official Swiss languages. Each of 26 cantons has its own constitution, parliament, and courts. Switzerland has had direct democracy since 1291."},
   {emoji:"🔴",headline:"The Swiss Guard has protected the Pope since 1506 — oldest military corps",detail:"Only Catholic Swiss men of good standing may join the Pontifical Swiss Guard. Their Renaissance-era uniform was allegedly designed by Michelangelo. The corps has protected every Pope for 500+ years."},
 ],
