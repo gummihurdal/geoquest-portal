@@ -2246,10 +2246,21 @@ async function loadFromDb(userId){
 }
 
 // ── Auth UI ──────────────────────────────────────────────────────────────────
-function showAuthModal(){
+function showAuthModal(hardGate){
   document.getElementById('auth-overlay').style.display='flex';
+  // In hard-gate mode hide the "browse without account" escape hatch
+  const browseBtn = document.getElementById('auth-browse-btn');
+  const browseDivider = document.getElementById('auth-browse-divider');
+  if(hardGate){
+    if(browseBtn) browseBtn.style.display='none';
+    if(browseDivider) browseDivider.style.display='none';
+  } else {
+    if(browseBtn) browseBtn.style.display='';
+    if(browseDivider) browseDivider.style.display='';
+  }
 }
 function hideAuthModal(){
+  if(!currentUser) return; // can't dismiss if not signed in
   document.getElementById('auth-overlay').style.display='none';
 }
 function setAuthMsg(msg, isErr){
@@ -2315,15 +2326,19 @@ function updateURL(){
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
+// Hide entire app until we know the auth state
+document.getElementById('app').style.visibility = 'hidden';
+
 (async ()=>{
   const {data:{session}} = await sb.auth.getSession();
   if(session?.user){
     currentUser = session.user;
     updateNavAuth(currentUser);
+    document.getElementById('app').style.visibility = '';
     await loadFromDb(currentUser.id);
   } else {
-    loadFromURL(); // show shared map for non-logged-in
-    updateNavAuth(null);
+    // Not signed in — keep app hidden, show full auth wall
+    showAuthModal(true);
   }
 
   sb.auth.onAuthStateChange(async (event, session)=>{
@@ -2331,24 +2346,18 @@ function updateURL(){
       currentUser = session.user;
       updateNavAuth(currentUser);
       hideAuthModal();
+      document.getElementById('app').style.visibility = '';
       await loadFromDb(currentUser.id);
     } else if(event==='SIGNED_OUT'){
       currentUser=null;
       updateNavAuth(null);
+      document.getElementById('app').style.visibility = 'hidden';
+      showAuthModal(true);
     }
   });
 })();
 
-// Show auth nudge on first search attempt if not logged in
-let authNudgeShown = false;
-document.getElementById('search').addEventListener('focus', ()=>{
-  if(!currentUser && !authNudgeShown){
-    authNudgeShown = true;
-    showAuthModal();
-    // Don't blur — let them search but countries won't be saved to DB
-    setTimeout(()=>document.getElementById('search').focus(), 50);
-  }
-});
+// Page is fully auth-gated — no search gate needed here
 
 </script>
 
@@ -2363,8 +2372,8 @@ document.getElementById('search').addEventListener('focus', ()=>{
 <div id="auth-overlay">
   <div id="auth-card">
     <div class="auth-globe">🌍</div>
-    <h2>Save your world</h2>
-    <p>Sign in to save your visited countries permanently.<br>Your map syncs across all your devices.</p>
+    <h2>Sign in to My World</h2>
+    <p>Track every country you've visited. Your map is saved permanently and syncs across all your devices.</p>
     <div class="auth-features">
       <div class="auth-feat"><span>💾</span> Saved forever</div>
       <div class="auth-feat"><span>📱</span> Any device</div>
@@ -2373,8 +2382,8 @@ document.getElementById('search').addEventListener('focus', ()=>{
     <input type="email" id="auth-email" placeholder="your@email.com" autocomplete="email">
     <button id="auth-submit" onclick="handleMagicLink()">Send magic link</button>
     <div id="auth-msg" class="auth-msg"></div>
-    <hr class="auth-divider">
-    <button id="auth-browse-btn" onclick="hideAuthModal()">Browse without account</button>
+    <hr class="auth-divider" id="auth-browse-divider">
+    <button id="auth-browse-btn" onclick="hideAuthModal()" style="display:none">Browse without account</button>
   </div>
 </div>
 
