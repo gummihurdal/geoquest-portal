@@ -2334,19 +2334,12 @@ async function handleForgotPassword(){
   else { setAuthMsg('✉️ Reset link sent — check your email', false); }
 }
 async function handleSignOut(){
-  // Clear auth token directly to avoid lock contention with the React app
-  try {
-    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
-  } catch(e) {}
-  sb.auth.signOut().catch(()=>{}); // fire and forget — token already cleared
-  currentUser=null;
-  updateNavAuth(null);
-  visited.clear();
-  Object.values(markerMeshes).forEach(m=>{ globeGroup.remove(m.outer); globeGroup.remove(m.inner); });
-  Object.keys(markerMeshes).forEach(k=>delete markerMeshes[k]);
-  renderVisited(); updateStats();
-  document.getElementById('tour-btn').disabled=true;
-  loadFromURL(); // fall back to URL if present
+  // Kill the session locally — don't await signOut() as it deadlocks on the shared Supabase lock
+  try { Object.keys(localStorage).filter(k=>k.startsWith('sb-')||k.startsWith('lock:')).forEach(k=>localStorage.removeItem(k)); } catch(e){}
+  try { Object.keys(sessionStorage).filter(k=>k.startsWith('sb-')).forEach(k=>sessionStorage.removeItem(k)); } catch(e){}
+  sb.auth.signOut().catch(()=>{}); // fire and forget
+  // Reload — auth gate will catch the missing session and show modal
+  window.location.reload();
 }
 
 function updateNavAuth(user){
