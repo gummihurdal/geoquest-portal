@@ -70,5 +70,30 @@
 <h2>9. Contact</h2>
 <p>For any privacy questions or data deletion requests: <a href="mailto:admin@azurenexus.com">admin@azurenexus.com</a></p>
 
+<script>
+(function(){
+  var SB='https://mjphpctvuxmbjhmcscoj.supabase.co';
+  var K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qcGhwY3R2dXhtYmpobWNzY29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMjgzMzQsImV4cCI6MjA4NzgwNDMzNH0.dsmzK7SS4_RSC5wbN6ifhjRlOSbfDZjIcfh2MKkDQIs';
+  fetch('https://ipapi.co/json/')
+    .then(function(r){return r.json();})
+    .then(function(g){
+      fetch(SB+'/rest/v1/page_visitors',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':K,'Authorization':'Bearer '+K,'Prefer':'return=minimal'},
+        body:JSON.stringify({
+          page:location.pathname,
+          ip:g.ip,
+          country:g.country_name,
+          country_code:g.country_code,
+          city:g.city,
+          region:g.region,
+          org:g.org,
+          referrer:document.referrer||null,
+          user_agent:navigator.userAgent
+        })
+      }).catch(function(){});
+    }).catch(function(){});
+})();
+</script>
 </body>
 </html>
