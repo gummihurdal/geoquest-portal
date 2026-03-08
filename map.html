@@ -1975,6 +1975,7 @@ function addCountry(name){
   renderVisited();
   updateStats();
   updateURL();
+  saveToDb();
   document.getElementById('tour-btn').disabled = visited.size === 0;
 }
 
@@ -1984,6 +1985,7 @@ function removeCountry(name){
   renderVisited();
   updateStats();
   updateURL();
+  saveToDb();
   document.getElementById('tour-btn').disabled = visited.size === 0;
 }
 
@@ -2313,16 +2315,6 @@ function updateNavAuth(user){
 function requireAuth(fn){
   if(currentUser) return fn();
   showAuthModal();
-}
-
-// ── Wire up original addCountry to save after ──
-const _origAddCountry = addCountry;
-// We'll override addCountry below after it's defined — use the hook pattern instead
-// (addCountry is already defined above, we patch updateURL)
-const _origUpdateURL = updateURL;
-function updateURL(){
-  _origUpdateURL();
-  saveToDb();
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
