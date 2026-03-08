@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My World — Countries I've Visited | GeoQuest</title>
+<meta name="description" content="Track every country you've visited. Watch your globe come alive with a cinematic tour of your travels.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+  --bg: #04060e;
+  --panel: #07101f;
+  --panel2: #0b1829;
+  --border: #1a2d47;
+  --teal: #00d4c8;
+  --teal2: #00a89e;
+  --gold: #e8b84b;
+  --gold2: #c99a2e;
+  --text: #dde5f4;
+  --muted: #5a6d8a;
+  --muted2: #3a4f6a;
+  --visited-dot: #00d4c8;
+  --active-dot: #e8b84b;
+  --danger: #e05060;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-ui: 'DM Sans', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── PANEL ── */
+#panel {
+  width: 360px;
+  min-width: 320px;
+  max-width: 360px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+  transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+#panel-header {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--teal); }
+
+#panel-header h1 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+#panel-header p {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+/* Search */
+#search-wrap {
+  padding: 14px 16px 10px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+#search {
+  width: 100%;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  padding: 10px 14px 10px 36px;
+  outline: none;
+  transition: border-color 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a6d8a' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+}
+#search:focus { border-color: var(--teal); }
+#search::placeholder { color: var(--muted2); }
+
+#suggestions {
+  position: absolute;
+  left: 16px; right: 16px;
+  top: 100%;
+  margin-top: -6px;
+  background: #0e1e35;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  display: none;
+}
+#suggestions::-webkit-scrollbar { width: 4px; }
+#suggestions::-webkit-scrollbar-track { background: transparent; }
+#suggestions::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13.5px;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: rgba(0,212,200,0.08); }
+.suggestion-item .s-emoji { font-size: 18px; width: 24px; text-align: center; }
+.suggestion-item .s-name { flex: 1; color: var(--text); }
+.suggestion-item .s-cont { font-size: 11px; color: var(--muted); }
+.suggestion-item .s-check { color: var(--teal); font-size: 14px; }
+
+/* Visited list */
+#visited-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 16px 8px;
+}
+#visited-list::-webkit-scrollbar { width: 4px; }
+#visited-list::-webkit-scrollbar-track { background: transparent; }
+#visited-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+#visited-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+#visited-empty .empty-icon { font-size: 36px; margin-bottom: 10px; display: block; }
+
+.visited-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: default;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+}
+.visited-chip:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
+.visited-chip .vc-emoji { font-size: 18px; width: 24px; text-align: center; }
+.visited-chip .vc-name { flex: 1; font-size: 13.5px; color: var(--text); }
+.visited-chip .vc-cont { font-size: 11px; color: var(--muted); }
+.visited-chip .vc-remove {
+  background: none;
+  border: none;
+  color: var(--muted2);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.2s, background 0.2s;
+}
+.visited-chip .vc-remove:hover { color: var(--danger); background: rgba(224,80,96,0.12); }
+
+/* Stats */
+#stats-panel {
+  flex-shrink: 0;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--panel2);
+}
+
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+#stat-count {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 600;
+  color: var(--teal);
+  line-height: 1;
+}
+.stat-denom {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stat-pct-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+#stat-pct { font-size: 12px; color: var(--teal); font-weight: 600; }
+
+.stat-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+#stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal2), var(--teal));
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+#rank-badge {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(232,184,75,0.1);
+  border: 1px solid rgba(232,184,75,0.2);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+#rank-badge .rb-icon { font-size: 18px; }
+#rank-badge .rb-title { font-size: 12px; font-weight: 600; color: var(--gold); }
+#rank-badge .rb-sub { font-size: 11px; color: var(--muted); }
+
+#continent-stats { display: flex; flex-direction: column; gap: 4px; }
+
+.cont-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+}
+.cont-name { width: 56px; color: var(--muted); }
+.cont-bar-wrap { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.cont-bar-fill { height: 100%; border-radius: 2px; background: var(--teal2); transition: width 0.5s; }
+.cont-nums { width: 42px; text-align: right; color: var(--muted); font-size: 10.5px; }
+
+/* Panel actions */
+#panel-actions {
+  flex-shrink: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#tour-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #003d3a, #004d48);
+  border: 1px solid var(--teal2);
+  border-radius: 10px;
+  color: var(--teal);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+#tour-btn:not(:disabled):hover {
+  background: linear-gradient(135deg, #004d48, #006560);
+  box-shadow: 0 0 20px rgba(0,212,200,0.2);
+}
+#tour-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+#share-btn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#share-btn:hover { border-color: var(--teal2); color: var(--teal); }
+
+/* ── GLOBE ── */
+#globe-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#globe-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── TOUR OVERLAY ── */
+#tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+#tour-overlay.hidden { opacity: 0; pointer-events: none; }
+#tour-overlay.active { opacity: 1; pointer-events: auto; }
+
+/* Tour background dims panel */
+#tour-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4,6,14,0.65);
+  backdrop-filter: blur(2px);
+}
+
+/* Tour card - bottom right cinematic style */
+#tour-card {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  width: 420px;
+  background: rgba(7,16,31,0.95);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 18px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,212,200,0.1);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s;
+  pointer-events: auto;
+}
+#tour-card.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+#tour-progress-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--teal2), var(--teal));
+  width: 0%;
+  transition: width 0.8s ease;
+}
+
+#tour-country-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+#tour-emoji {
+  font-size: 40px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.3));
+}
+
+#tour-country-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+#tour-continent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+#tour-fact-wrap {
+  padding: 18px 24px 16px;
+  min-height: 120px;
+}
+
+#tour-fact-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+#tour-fact-emoji { font-size: 24px; }
+
+#tour-fact-headline {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.3;
+  flex: 1;
+}
+
+#tour-fact-detail {
+  font-size: 13px;
+  color: #8fa3be;
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+#tour-fact-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 24px 4px;
+}
+
+.fact-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s;
+}
+.fact-dot.active { background: var(--teal); }
+
+#tour-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+#tour-prev, #tour-next {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+  font-family: sans-serif;
+}
+#tour-prev:hover, #tour-next:hover { border-color: var(--teal); color: var(--teal); }
+
+#tour-pause-play {
+  flex: 1;
+  padding: 9px;
+  background: rgba(0,212,200,0.1);
+  border: 1px solid rgba(0,212,200,0.3);
+  border-radius: 8px;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  transition: all 0.2s;
+}
+#tour-pause-play:hover { background: rgba(0,212,200,0.2); }
+
+#tour-stop {
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  transition: all 0.2s;
+}
+#tour-stop:hover { border-color: var(--danger); color: var(--danger); }
+
+#tour-counter {
+  position: absolute;
+  top: -34px;
+  right: 0;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Tour country name top display */
+#tour-toplabel {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+#tour-toplabel h2 {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 2px 30px rgba(0,0,0,0.8);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+#tour-toplabel p {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* Copy toast */
+#copy-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--teal);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 100px;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#copy-toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Mobile */
+@media (max-width: 700px) {
+  #app { flex-direction: column; }
+  #panel {
+    width: 100%;
+    max-width: 100%;
+    height: 45vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  #globe-wrap { height: 55vh; }
+  #tour-card { width: calc(100vw - 24px); bottom: 12px; right: 12px; }
+  #tour-toplabel h2 { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── PANEL ── -->
+  <aside id="panel">
+    <div id="panel-header">
+      <a href="/" class="back-link">← GeoQuest</a>
+      <h1>My World</h1>
+      <p id="panel-sub">Add every country you've set foot in</p>
+    </div>
+
+    <div id="search-wrap">
+      <input type="text" id="search" placeholder="Search countries…" autocomplete="off" spellcheck="false">
+      <div id="suggestions"></div>
+    </div>
+
+    <div id="visited-list">
+      <div id="visited-empty">
+        <span class="empty-icon">🌍</span>
+        Search for a country above<br>and start building your world.
+      </div>
+    </div>
+
+    <div id="stats-panel">
+      <div class="stat-row">
+        <span id="stat-count">0</span>
+        <span class="stat-denom">/ 195 countries</span>
+      </div>
+      <div class="stat-pct-row">
+        <span id="stat-pct">0% of the world</span>
+      </div>
+      <div class="stat-bar"><div id="stat-bar-fill"></div></div>
+      <div id="rank-badge">
+        <span class="rb-icon"></span>
+        <div><div class="rb-title"></div><div class="rb-sub"></div></div>
+      </div>
+      <div id="continent-stats"></div>
+    </div>
+
+    <div id="panel-actions">
+      <button id="tour-btn" disabled>🌍 Take me around the world</button>
+      <button id="share-btn">🔗 Share my map</button>
+    </div>
+  </aside>
+
+  <!-- ── GLOBE ── -->
+  <main id="globe-wrap">
+    <canvas id="globe-canvas"></canvas>
+  </main>
+
+  <!-- ── TOUR OVERLAY ── -->
+  <div id="tour-overlay" class="hidden">
+    <div id="tour-backdrop"></div>
+    <div id="tour-toplabel">
+      <h2 id="tour-top-name"></h2>
+      <p id="tour-top-cont"></p>
+    </div>
+    <div id="tour-card">
+      <div id="tour-progress-bar"></div>
+      <div id="tour-country-info">
+        <div id="tour-emoji"></div>
+        <div>
+          <div id="tour-country-name"></div>
+          <div id="tour-continent-badge"></div>
+        </div>
+        <div id="tour-counter"></div>
+      </div>
+      <div id="tour-fact-wrap">
+        <div id="tour-fact-header">
+          <div id="tour-fact-emoji"></div>
+          <div id="tour-fact-headline"></div>
+        </div>
+        <div id="tour-fact-detail"></div>
+      </div>
+      <div id="tour-fact-nav"><div id="tour-fact-dots"></div></div>
+      <div id="tour-controls">
+        <button id="tour-prev">‹</button>
+        <button id="tour-next">›</button>
+        <button id="tour-pause-play">⏸ Pause</button>
+        <button id="tour-stop">✕ End</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div id="copy-toast">🔗 Link copied!</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// COUNTRY DATA — 195 countries
+// ═══════════════════════════════════════════════════════
+const COUNTRIES = [
+  // Europe
+  {name:"Albania",code:"AL",lat:41.2,lng:20.2,cont:"Europe",emoji:"🇦🇱"},
+  {name:"Andorra",code:"AD",lat:42.5,lng:1.5,cont:"Europe",emoji:"🇦🇩"},
+  {name:"Austria",code:"AT",lat:47.5,lng:14.5,cont:"Europe",emoji:"🇦🇹"},
+  {name:"Belarus",code:"BY",lat:53.7,lng:27.9,cont:"Europe",emoji:"🇧🇾"},
+  {name:"Belgium",code:"BE",lat:50.8,lng:4.5,cont:"Europe",emoji:"🇧🇪"},
+  {name:"Bosnia and Herzegovina",code:"BA",lat:44.2,lng:17.9,cont:"Europe",emoji:"🇧🇦"},
+  {name:"Bulgaria",code:"BG",lat:42.7,lng:25.5,cont:"Europe",emoji:"🇧🇬"},
+  {name:"Croatia",code:"HR",lat:45.1,lng:15.2,cont:"Europe",emoji:"🇭🇷"},
+  {name:"Cyprus",code:"CY",lat:35.1,lng:33.4,cont:"Europe",emoji:"🇨🇾"},
+  {name:"Czech Republic",code:"CZ",lat:50.1,lng:15.8,cont:"Europe",emoji:"🇨🇿"},
+  {name:"Denmark",code:"DK",lat:56.3,lng:9.5,cont:"Europe",emoji:"🇩🇰"},
+  {name:"Estonia",code:"EE",lat:58.6,lng:25.0,cont:"Europe",emoji:"🇪🇪"},
+  {name:"Finland",code:"FI",lat:64.0,lng:26.0,cont:"Europe",emoji:"🇫🇮"},
+  {name:"France",code:"FR",lat:46.2,lng:2.2,cont:"Europe",emoji:"🇫🇷"},
+  {name:"Germany",code:"DE",lat:51.2,lng:10.5,cont:"Europe",emoji:"🇩🇪"},
+  {name:"Greece",code:"GR",lat:39.1,lng:21.8,cont:"Europe",emoji:"🇬🇷"},
+  {name:"Hungary",code:"HU",lat:47.2,lng:19.5,cont:"Europe",emoji:"🇭🇺"},
+  {name:"Iceland",code:"IS",lat:65.0,lng:-18.5,cont:"Europe",emoji:"🇮🇸"},
+  {name:"Ireland",code:"IE",lat:53.4,lng:-8.2,cont:"Europe",emoji:"🇮🇪"},
+  {name:"Italy",code:"IT",lat:41.9,lng:12.6,cont:"Europe",emoji:"🇮🇹"},
+  {name:"Latvia",code:"LV",lat:56.9,lng:24.6,cont:"Europe",emoji:"🇱🇻"},
+  {name:"Liechtenstein",code:"LI",lat:47.2,lng:9.6,cont:"Europe",emoji:"🇱🇮"},
+  {name:"Lithuania",code:"LT",lat:55.2,lng:23.9,cont:"Europe",emoji:"🇱🇹"},
+  {name:"Luxembourg",code:"LU",lat:49.8,lng:6.1,cont:"Europe",emoji:"🇱🇺"},
+  {name:"Malta",code:"MT",lat:35.9,lng:14.4,cont:"Europe",emoji:"🇲🇹"},
+  {name:"Moldova",code:"MD",lat:47.4,lng:28.4,cont:"Europe",emoji:"🇲🇩"},
+  {name:"Monaco",code:"MC",lat:43.7,lng:7.4,cont:"Europe",emoji:"🇲🇨"},
+  {name:"Montenegro",code:"ME",lat:42.7,lng:19.4,cont:"Europe",emoji:"🇲🇪"},
+  {name:"Netherlands",code:"NL",lat:52.4,lng:5.3,cont:"Europe",emoji:"🇳🇱"},
+  {name:"North Macedonia",code:"MK",lat:41.6,lng:21.7,cont:"Europe",emoji:"🇲🇰"},
+  {name:"Norway",code:"NO",lat:60.5,lng:8.5,cont:"Europe",emoji:"🇳🇴"},
+  {name:"Poland",code:"PL",lat:52.1,lng:19.1,cont:"Europe",emoji:"🇵🇱"},
+  {name:"Portugal",code:"PT",lat:39.4,lng:-8.2,cont:"Europe",emoji:"🇵🇹"},
+  {name:"Romania",code:"RO",lat:45.9,lng:24.9,cont:"Europe",emoji:"🇷🇴"},
+  {name:"Russia",code:"RU",lat:61.5,lng:105.3,cont:"Europe",emoji:"🇷🇺"},
+  {name:"San Marino",code:"SM",lat:43.9,lng:12.5,cont:"Europe",emoji:"🇸🇲"},
+  {name:"Serbia",code:"RS",lat:44.0,lng:21.0,cont:"Europe",emoji:"🇷🇸"},
+  {name:"Slovakia",code:"SK",lat:48.7,lng:19.7,cont:"Europe",emoji:"🇸🇰"},
+  {name:"Slovenia",code:"SI",lat:46.1,lng:14.8,cont:"Europe",emoji:"🇸🇮"},
+  {name:"Spain",code:"ES",lat:40.5,lng:-3.7,cont:"Europe",emoji:"🇪🇸"},
+  {name:"Sweden",code:"SE",lat:62.0,lng:15.0,cont:"Europe",emoji:"🇸🇪"},
+  {name:"Switzerland",code:"CH",lat:46.8,lng:8.2,cont:"Europe",emoji:"🇨🇭"},
+  {name:"Turkey",code:"TR",lat:38.9,lng:35.2,cont:"Europe",emoji:"🇹🇷"},
+  {name:"Ukraine",code:"UA",lat:49.0,lng:31.4,cont:"Europe",emoji:"🇺🇦"},
+  {name:"United Kingdom",code:"GB",lat:55.4,lng:-3.4,cont:"Europe",emoji:"🇬🇧"},
+  {name:"Vatican City",code:"VA",lat:41.9,lng:12.5,cont:"Europe",emoji:"🇻🇦"},
+  {name:"Georgia",code:"GE",lat:42.3,lng:43.4,cont:"Europe",emoji:"🇬🇪"},
+  {name:"Armenia",code:"AM",lat:40.1,lng:45.0,cont:"Europe",emoji:"🇦🇲"},
+  {name:"Azerbaijan",code:"AZ",lat:40.1,lng:47.6,cont:"Europe",emoji:"🇦🇿"},
+  // Asia
+  {name:"Afghanistan",code:"AF",lat:33.9,lng:67.7,cont:"Asia",emoji:"🇦🇫"},
+  {name:"Bahrain",code:"BH",lat:26.0,lng:50.6,cont:"Asia",emoji:"🇧🇭"},
+  {name:"Bangladesh",code:"BD",lat:23.7,lng:90.4,cont:"Asia",emoji:"🇧🇩"},
+  {name:"Bhutan",code:"BT",lat:27.5,lng:90.4,cont:"Asia",emoji:"🇧🇹"},
+  {name:"Brunei",code:"BN",lat:4.5,lng:114.7,cont:"Asia",emoji:"🇧🇳"},
+  {name:"Cambodia",code:"KH",lat:12.6,lng:104.9,cont:"Asia",emoji:"🇰🇭"},
+  {name:"China",code:"CN",lat:35.9,lng:104.2,cont:"Asia",emoji:"🇨🇳"},
+  {name:"India",code:"IN",lat:20.6,lng:79.1,cont:"Asia",emoji:"🇮🇳"},
+  {name:"Indonesia",code:"ID",lat:-0.8,lng:113.9,cont:"Asia",emoji:"🇮🇩"},
+  {name:"Iran",code:"IR",lat:32.4,lng:53.7,cont:"Asia",emoji:"🇮🇷"},
+  {name:"Iraq",code:"IQ",lat:33.2,lng:43.7,cont:"Asia",emoji:"🇮🇶"},
+  {name:"Israel",code:"IL",lat:31.5,lng:34.8,cont:"Asia",emoji:"🇮🇱"},
+  {name:"Japan",code:"JP",lat:36.2,lng:138.3,cont:"Asia",emoji:"🇯🇵"},
+  {name:"Jordan",code:"JO",lat:30.6,lng:36.2,cont:"Asia",emoji:"🇯🇴"},
+  {name:"Kazakhstan",code:"KZ",lat:48.0,lng:68.0,cont:"Asia",emoji:"🇰🇿"},
+  {name:"Kuwait",code:"KW",lat:29.3,lng:47.5,cont:"Asia",emoji:"🇰🇼"},
+  {name:"Kyrgyzstan",code:"KG",lat:41.2,lng:74.8,cont:"Asia",emoji:"🇰🇬"},
+  {name:"Laos",code:"LA",lat:18.2,lng:103.9,cont:"Asia",emoji:"🇱🇦"},
+  {name:"Lebanon",code:"LB",lat:33.9,lng:35.9,cont:"Asia",emoji:"🇱🇧"},
+  {name:"Malaysia",code:"MY",lat:4.2,lng:108.0,cont:"Asia",emoji:"🇲🇾"},
+  {name:"Maldives",code:"MV",lat:3.2,lng:73.2,cont:"Asia",emoji:"🇲🇻"},
+  {name:"Mongolia",code:"MN",lat:46.9,lng:103.8,cont:"Asia",emoji:"🇲🇳"},
+  {name:"Myanmar",code:"MM",lat:16.9,lng:96.1,cont:"Asia",emoji:"🇲🇲"},
+  {name:"Nepal",code:"NP",lat:28.4,lng:84.1,cont:"Asia",emoji:"🇳🇵"},
+  {name:"North Korea",code:"KP",lat:40.3,lng:127.5,cont:"Asia",emoji:"🇰🇵"},
+  {name:"Oman",code:"OM",lat:21.5,lng:55.9,cont:"Asia",emoji:"🇴🇲"},
+  {name:"Pakistan",code:"PK",lat:30.4,lng:69.3,cont:"Asia",emoji:"🇵🇰"},
+  {name:"Palestine",code:"PS",lat:31.9,lng:35.2,cont:"Asia",emoji:"🇵🇸"},
+  {name:"Philippines",code:"PH",lat:12.9,lng:121.8,cont:"Asia",emoji:"🇵🇭"},
+  {name:"Qatar",code:"QA",lat:25.4,lng:51.2,cont:"Asia",emoji:"🇶🇦"},
+  {name:"Saudi Arabia",code:"SA",lat:23.9,lng:45.1,cont:"Asia",emoji:"🇸🇦"},
+  {name:"Singapore",code:"SG",lat:1.4,lng:103.8,cont:"Asia",emoji:"🇸🇬"},
+  {name:"South Korea",code:"KR",lat:36.0,lng:127.8,cont:"Asia",emoji:"🇰🇷"},
+  {name:"Sri Lanka",code:"LK",lat:7.9,lng:80.8,cont:"Asia",emoji:"🇱🇰"},
+  {name:"Syria",code:"SY",lat:34.8,lng:38.9,cont:"Asia",emoji:"🇸🇾"},
+  {name:"Taiwan",code:"TW",lat:23.7,lng:121.0,cont:"Asia",emoji:"🇹🇼"},
+  {name:"Tajikistan",code:"TJ",lat:38.9,lng:71.3,cont:"Asia",emoji:"🇹🇯"},
+  {name:"Thailand",code:"TH",lat:15.9,lng:100.9,cont:"Asia",emoji:"🇹🇭"},
+  {name:"Timor-Leste",code:"TL",lat:-8.9,lng:125.7,cont:"Asia",emoji:"🇹🇱"},
+  {name:"Turkmenistan",code:"TM",lat:40.0,lng:59.6,cont:"Asia",emoji:"🇹🇲"},
+  {name:"United Arab Emirates",code:"AE",lat:23.4,lng:53.8,cont:"Asia",emoji:"🇦🇪"},
+  {name:"Uzbekistan",code:"UZ",lat:41.4,lng:64.6,cont:"Asia",emoji:"🇺🇿"},
+  {name:"Vietnam",code:"VN",lat:14.1,lng:108.3,cont:"Asia",emoji:"🇻🇳"},
+  {name:"Yemen",code:"YE",lat:15.6,lng:48.5,cont:"Asia",emoji:"🇾🇪"},
+  // Africa
+  {name:"Algeria",code:"DZ",lat:28.0,lng:1.7,cont:"Africa",emoji:"🇩🇿"},
+  {name:"Angola",code:"AO",lat:-11.2,lng:17.9,cont:"Africa",emoji:"🇦🇴"},
+  {name:"Benin",code:"BJ",lat:9.3,lng:2.3,cont:"Africa",emoji:"🇧🇯"},
+  {name:"Botswana",code:"BW",lat:-22.3,lng:24.7,cont:"Africa",emoji:"🇧🇼"},
+  {name:"Burkina Faso",code:"BF",lat:12.4,lng:-1.6,cont:"Africa",emoji:"🇧🇫"},
+  {name:"Burundi",code:"BI",lat:-3.4,lng:30.0,cont:"Africa",emoji:"🇧🇮"},
+  {name:"Cabo Verde",code:"CV",lat:16.0,lng:-24.0,cont:"Africa",emoji:"🇨🇻"},
+  {name:"Cameroon",code:"CM",lat:3.9,lng:11.5,cont:"Africa",emoji:"🇨🇲"},
+  {name:"Central African Republic",code:"CF",lat:7.0,lng:21.0,cont:"Africa",emoji:"🇨🇫"},
+  {name:"Chad",code:"TD",lat:15.5,lng:18.7,cont:"Africa",emoji:"🇹🇩"},
+  {name:"Comoros",code:"KM",lat:-11.6,lng:43.3,cont:"Africa",emoji:"🇰🇲"},
+  {name:"Congo (Brazzaville)",code:"CG",lat:-0.2,lng:15.8,cont:"Africa",emoji:"🇨🇬"},
+  {name:"Congo (Kinshasa)",code:"CD",lat:-2.9,lng:23.7,cont:"Africa",emoji:"🇨🇩"},
+  {name:"Djibouti",code:"DJ",lat:11.8,lng:42.6,cont:"Africa",emoji:"🇩🇯"},
+  {name:"Egypt",code:"EG",lat:26.8,lng:30.8,cont:"Africa",emoji:"🇪🇬"},
+  {name:"Equatorial Guinea",code:"GQ",lat:1.7,lng:10.3,cont:"Africa",emoji:"🇬🇶"},
+  {name:"Eritrea",code:"ER",lat:15.2,lng:39.8,cont:"Africa",emoji:"🇪🇷"},
+  {name:"Eswatini",code:"SZ",lat:-26.5,lng:31.5,cont:"Africa",emoji:"🇸🇿"},
+  {name:"Ethiopia",code:"ET",lat:9.1,lng:40.5,cont:"Africa",emoji:"🇪🇹"},
+  {name:"Gabon",code:"GA",lat:-0.8,lng:11.6,cont:"Africa",emoji:"🇬🇦"},
+  {name:"Gambia",code:"GM",lat:13.4,lng:-15.3,cont:"Africa",emoji:"🇬🇲"},
+  {name:"Ghana",code:"GH",lat:7.9,lng:-1.0,cont:"Africa",emoji:"🇬🇭"},
+  {name:"Guinea",code:"GN",lat:11.0,lng:-10.9,cont:"Africa",emoji:"🇬🇳"},
+  {name:"Guinea-Bissau",code:"GW",lat:11.8,lng:-15.2,cont:"Africa",emoji:"🇬🇼"},
+  {name:"Ivory Coast",code:"CI",lat:7.5,lng:-5.5,cont:"Africa",emoji:"🇨🇮"},
+  {name:"Kenya",code:"KE",lat:-0.0,lng:37.9,cont:"Africa",emoji:"🇰🇪"},
+  {name:"Lesotho",code:"LS",lat:-29.6,lng:28.2,cont:"Africa",emoji:"🇱🇸"},
+  {name:"Liberia",code:"LR",lat:6.4,lng:-9.4,cont:"Africa",emoji:"🇱🇷"},
+  {name:"Libya",code:"LY",lat:25.0,lng:17.2,cont:"Africa",emoji:"🇱🇾"},
+  {name:"Madagascar",code:"MG",lat:-18.8,lng:46.9,cont:"Africa",emoji:"🇲🇬"},
+  {name:"Malawi",code:"MW",lat:-13.3,lng:34.3,cont:"Africa",emoji:"🇲🇼"},
+  {name:"Mali",code:"ML",lat:17.6,lng:-1.8,cont:"Africa",emoji:"🇲🇱"},
+  {name:"Mauritania",code:"MR",lat:21.0,lng:-10.9,cont:"Africa",emoji:"🇲🇷"},
+  {name:"Mauritius",code:"MU",lat:-20.3,lng:57.6,cont:"Africa",emoji:"🇲🇺"},
+  {name:"Morocco",code:"MA",lat:31.8,lng:-7.1,cont:"Africa",emoji:"🇲🇦"},
+  {name:"Mozambique",code:"MZ",lat:-18.7,lng:35.5,cont:"Africa",emoji:"🇲🇿"},
+  {name:"Namibia",code:"NA",lat:-22.0,lng:17.1,cont:"Africa",emoji:"🇳🇦"},
+  {name:"Niger",code:"NE",lat:17.6,lng:8.1,cont:"Africa",emoji:"🇳🇪"},
+  {name:"Nigeria",code:"NG",lat:9.1,lng:8.7,cont:"Africa",emoji:"🇳🇬"},
+  {name:"Rwanda",code:"RW",lat:-2.0,lng:29.9,cont:"Africa",emoji:"🇷🇼"},
+  {name:"São Tomé and Príncipe",code:"ST",lat:0.2,lng:6.6,cont:"Africa",emoji:"🇸🇹"},
+  {name:"Senegal",code:"SN",lat:14.5,lng:-14.5,cont:"Africa",emoji:"🇸🇳"},
+  {name:"Seychelles",code:"SC",lat:-4.7,lng:55.5,cont:"Africa",emoji:"🇸🇨"},
+  {name:"Sierra Leone",code:"SL",lat:8.5,lng:-11.8,cont:"Africa",emoji:"🇸🇱"},
+  {name:"Somalia",code:"SO",lat:6.0,lng:46.2,cont:"Africa",emoji:"🇸🇴"},
+  {name:"South Africa",code:"ZA",lat:-30.6,lng:22.9,cont:"Africa",emoji:"🇿🇦"},
+  {name:"South Sudan",code:"SS",lat:7.9,lng:29.9,cont:"Africa",emoji:"🇸🇸"},
+  {name:"Sudan",code:"SD",lat:15.6,lng:32.5,cont:"Africa",emoji:"🇸🇩"},
+  {name:"Tanzania",code:"TZ",lat:-6.4,lng:34.9,cont:"Africa",emoji:"🇹🇿"},
+  {name:"Togo",code:"TG",lat:8.6,lng:0.8,cont:"Africa",emoji:"🇹🇬"},
+  {name:"Tunisia",code:"TN",lat:33.9,lng:9.6,cont:"Africa",emoji:"🇹🇳"},
+  {name:"Uganda",code:"UG",lat:1.4,lng:32.3,cont:"Africa",emoji:"🇺🇬"},
+  {name:"Zambia",code:"ZM",lat:-13.1,lng:27.8,cont:"Africa",emoji:"🇿🇲"},
+  {name:"Zimbabwe",code:"ZW",lat:-20.0,lng:30.0,cont:"Africa",emoji:"🇿🇼"},
+  // Americas
+  {name:"Antigua and Barbuda",code:"AG",lat:17.1,lng:-61.8,cont:"Americas",emoji:"🇦🇬"},
+  {name:"Argentina",code:"AR",lat:-38.4,lng:-63.6,cont:"Americas",emoji:"🇦🇷"},
+  {name:"Bahamas",code:"BS",lat:25.0,lng:-77.4,cont:"Americas",emoji:"🇧🇸"},
+  {name:"Barbados",code:"BB",lat:13.2,lng:-59.6,cont:"Americas",emoji:"🇧🇧"},
+  {name:"Belize",code:"BZ",lat:17.2,lng:-88.5,cont:"Americas",emoji:"🇧🇿"},
+  {name:"Bolivia",code:"BO",lat:-16.3,lng:-63.6,cont:"Americas",emoji:"🇧🇴"},
+  {name:"Brazil",code:"BR",lat:-14.2,lng:-51.9,cont:"Americas",emoji:"🇧🇷"},
+  {name:"Canada",code:"CA",lat:60.0,lng:-96.8,cont:"Americas",emoji:"🇨🇦"},
+  {name:"Chile",code:"CL",lat:-35.7,lng:-71.5,cont:"Americas",emoji:"🇨🇱"},
+  {name:"Colombia",code:"CO",lat:4.6,lng:-74.3,cont:"Americas",emoji:"🇨🇴"},
+  {name:"Costa Rica",code:"CR",lat:9.7,lng:-83.8,cont:"Americas",emoji:"🇨🇷"},
+  {name:"Cuba",code:"CU",lat:21.5,lng:-79.4,cont:"Americas",emoji:"🇨🇺"},
+  {name:"Dominica",code:"DM",lat:15.4,lng:-61.4,cont:"Americas",emoji:"🇩🇲"},
+  {name:"Dominican Republic",code:"DO",lat:18.7,lng:-70.2,cont:"Americas",emoji:"🇩🇴"},
+  {name:"Ecuador",code:"EC",lat:-1.8,lng:-78.2,cont:"Americas",emoji:"🇪🇨"},
+  {name:"El Salvador",code:"SV",lat:13.8,lng:-88.9,cont:"Americas",emoji:"🇸🇻"},
+  {name:"Grenada",code:"GD",lat:12.1,lng:-61.7,cont:"Americas",emoji:"🇬🇩"},
+  {name:"Guatemala",code:"GT",lat:15.8,lng:-90.2,cont:"Americas",emoji:"🇬🇹"},
+  {name:"Guyana",code:"GY",lat:4.9,lng:-58.9,cont:"Americas",emoji:"🇬🇾"},
+  {name:"Haiti",code:"HT",lat:18.9,lng:-72.3,cont:"Americas",emoji:"🇭🇹"},
+  {name:"Honduras",code:"HN",lat:15.2,lng:-86.2,cont:"Americas",emoji:"🇭🇳"},
+  {name:"Jamaica",code:"JM",lat:18.1,lng:-77.3,cont:"Americas",emoji:"🇯🇲"},
+  {name:"Mexico",code:"MX",lat:23.6,lng:-102.6,cont:"Americas",emoji:"🇲🇽"},
+  {name:"Nicaragua",code:"NI",lat:12.9,lng:-85.2,cont:"Americas",emoji:"🇳🇮"},
+  {name:"Panama",code:"PA",lat:8.5,lng:-80.8,cont:"Americas",emoji:"🇵🇦"},
+  {name:"Paraguay",code:"PY",lat:-23.4,lng:-58.4,cont:"Americas",emoji:"🇵🇾"},
+  {name:"Peru",code:"PE",lat:-9.2,lng:-75.0,cont:"Americas",emoji:"🇵🇪"},
+  {name:"Saint Kitts and Nevis",code:"KN",lat:17.4,lng:-62.8,cont:"Americas",emoji:"🇰🇳"},
+  {name:"Saint Lucia",code:"LC",lat:13.9,lng:-60.9,cont:"Americas",emoji:"🇱🇨"},
+  {name:"Saint Vincent and the Grenadines",code:"VC",lat:13.3,lng:-61.2,cont:"Americas",emoji:"🇻🇨"},
+  {name:"Suriname",code:"SR",lat:3.9,lng:-56.0,cont:"Americas",emoji:"🇸🇷"},
+  {name:"Trinidad and Tobago",code:"TT",lat:10.7,lng:-61.2,cont:"Americas",emoji:"🇹🇹"},
+  {name:"United States",code:"US",lat:37.1,lng:-95.7,cont:"Americas",emoji:"🇺🇸"},
+  {name:"Uruguay",code:"UY",lat:-32.5,lng:-55.8,cont:"Americas",emoji:"🇺🇾"},
+  {name:"Venezuela",code:"VE",lat:6.4,lng:-66.6,cont:"Americas",emoji:"🇻🇪"},
+  // Oceania
+  {name:"Australia",code:"AU",lat:-25.3,lng:133.8,cont:"Oceania",emoji:"🇦🇺"},
+  {name:"Fiji",code:"FJ",lat:-16.6,lng:179.4,cont:"Oceania",emoji:"🇫🇯"},
+  {name:"Kiribati",code:"KI",lat:1.9,lng:-157.4,cont:"Oceania",emoji:"🇰🇮"},
+  {name:"Marshall Islands",code:"MH",lat:7.1,lng:171.2,cont:"Oceania",emoji:"🇲🇭"},
+  {name:"Micronesia",code:"FM",lat:6.9,lng:158.2,cont:"Oceania",emoji:"🇫🇲"},
+  {name:"Nauru",code:"NR",lat:-0.5,lng:166.9,cont:"Oceania",emoji:"🇳🇷"},
+  {name:"New Zealand",code:"NZ",lat:-41.5,lng:172.8,cont:"Oceania",emoji:"🇳🇿"},
+  {name:"Palau",code:"PW",lat:7.5,lng:134.6,cont:"Oceania",emoji:"🇵🇼"},
+  {name:"Papua New Guinea",code:"PG",lat:-6.3,lng:143.9,cont:"Oceania",emoji:"🇵🇬"},
+  {name:"Samoa",code:"WS",lat:-13.8,lng:-172.1,cont:"Oceania",emoji:"🇼🇸"},
+  {name:"Solomon Islands",code:"SB",lat:-9.6,lng:160.2,cont:"Oceania",emoji:"🇸🇧"},
+  {name:"Tonga",code:"TO",lat:-21.2,lng:-175.2,cont:"Oceania",emoji:"🇹🇴"},
+  {name:"Tuvalu",code:"TV",lat:-7.1,lng:177.6,cont:"Oceania",emoji:"🇹🇻"},
+  {name:"Vanuatu",code:"VU",lat:-15.4,lng:166.9,cont:"Oceania",emoji:"🇻🇺"},
+];
+
+const TOTAL = 195;
+
+// ═══════════════════════════════════════════════════════
+// FACTS — curated for common travel destinations + unique countries
+// ═══════════════════════════════════════════════════════
+const FACTS = {
+"France":[
+  {emoji:"🗼",headline:"The Eiffel Tower grows 15 cm taller in summer",detail:"The iron expands in heat — making the tower measurably taller on hot days than cold ones. It's been the world's most visited monument since it opened in 1889."},
+  {emoji:"🥖",headline:"France has a law protecting the quality of the baguette",detail:"The 1993 'Bread Decree' defines exactly how an artisan baguette must be made — kneaded, fermented and baked on the premises. Supermarket baguettes are legally different products."},
+  {emoji:"🍷",headline:"French people drink 40 litres of wine per person per year",detail:"France is the world's largest wine exporter. The country has 300+ distinct AOC wine regions. Its vineyards cover 800,000 hectares — more than the entire area of Cyprus."},
+],
+"Italy":[
+  {emoji:"🍕",headline:"Pizza was invented in Naples in the 1700s",detail:"Neapolitan pizza is so culturally significant that UNESCO put Neapolitan pizzaiuolo artistry on its intangible heritage list. The original was just tomato, mozzarella, and basil."},
+  {emoji:"🏛️",headline:"Italy has more UNESCO World Heritage Sites than any other country",detail:"With 58 UNESCO sites, Italy edges China for the top spot. Rome alone has enough ruins to fill years of exploration — the Colosseum hosted events for 400+ years."},
+  {emoji:"🌊",headline:"Venice is built on 118 islands — and it is sinking 1-2 mm per year",detail:"The city sits on 20 million timber piles driven into the lagoon floor. It has flooded over 100 times a year in recent decades. The MOSE barrier was finally completed in 2020 after 50 years of construction."},
+],
+"Spain":[
+  {emoji:"😴",headline:"Spain's siesta is protected — quiet hours are law in many regions",detail:"Spanish law mandates quiet hours 14:00–17:00 in most regions. The siesta originated in agricultural communities where midday heat made outdoor work impossible."},
+  {emoji:"🍅",headline:"La Tomatina: 20,000 people throw 150 tonnes of tomatoes at each other",detail:"Held annually in Buñol since 1945, La Tomatina is the world's largest food fight. The entire town runs red for an hour. The origins are disputed but involve a food cart accident in the 1940s."},
+  {emoji:"🏟️",headline:"The Camino de Santiago has been walked for 1,000 years",detail:"Over 300,000 people complete the Camino annually from dozens of starting points across Europe. The route predates all other European long-distance hiking trails by centuries."},
+],
+"Germany":[
+  {emoji:"🍺",headline:"Germany has 1,500 different beer types — Oktoberfest serves 7 million litres",detail:"The Reinheitsgebot (beer purity law) from 1516 is the world's oldest still-active food regulation. Oktoberfest in Munich draws 6 million visitors drinking 7 million litres over 2 weeks."},
+  {emoji:"🏰",headline:"Germany has over 20,000 castles — more than any country in the world",detail:"The Rhine Valley alone has 40+ castles in 65 km. Neuschwanstein Castle (1886) inspired Disney's Sleeping Beauty Castle and receives 1.5 million visitors annually."},
+  {emoji:"🚗",headline:"The Autobahn has no general speed limit — and 60% has no limit at all",detail:"Germany's 13,000 km motorway network is the world's most famous. The sections without limits average 130 km/h in practice — but Porsches doing 250+ are not uncommon."},
+],
+"United Kingdom":[
+  {emoji:"🌍",headline:"The British Empire covered 24% of Earth — the largest empire in history",detail:"At its 1920 peak, Britain ruled 20% of the world's population. Its legacy shaped borders, languages, and legal systems across 6 continents. 'The sun never sets on the British Empire' was literally true."},
+  {emoji:"☕",headline:"Britons drink 100 million cups of tea per day",detail:"Afternoon tea was invented by the 7th Duchess of Bedford in 1840 to address a 'sinking feeling' at 4 PM. The UK consumes 36 billion cups per year — 4× more than the US."},
+  {emoji:"🎭",headline:"Shakespeare invented 1,700 words still in daily use",detail:"Words including bedroom, lonely, gossip, generous, and swagger were all first recorded in Shakespeare's works. He also invented plot structures reused in thousands of films and plays."},
+],
+"United States":[
+  {emoji:"🌋",headline:"Yellowstone sits above a supervolcano — last erupted 640,000 years ago",detail:"The magma chamber beneath Yellowstone is 80×55 km. A full eruption could blanket the Midwest in ash. It erupts in cycles of roughly 600,000 years — the last one was 640,000 years ago."},
+  {emoji:"✈️",headline:"13,000 airports — more than the rest of the world combined",detail:"The US has 13,513 airports. The rest of the world has about 28,000 combined. O'Hare alone handles 900,000 flights per year. Americans fly more passenger-miles than all other countries combined."},
+  {emoji:"🗽",headline:"4 million km of roads — enough to reach the moon 10 times",detail:"The Interstate Highway System was the world's largest public works project when built 1956–1992. Americans drive 5 trillion km per year — more than the distance to the nearest star."},
+],
+"Japan":[
+  {emoji:"🌸",headline:"Japan has 200+ types of ramen — a dedicated museum for each",detail:"Every region has its own ramen style. The Shin-Yokohama Ramen Museum is an underground 1958 Tokyo recreation with 9 ramen restaurants. Japan has 3 million vending machines — one per 40 people."},
+  {emoji:"🏔️",headline:"Mount Fuji has been climbed by a 3-year-old and a 100-year-old",detail:"Mount Fuji is climbed by 200,000+ people annually, mostly in July-August. The oldest person to summit was 100 years old. 'A wise man climbs Fuji once. A fool climbs it twice.'"},
+  {emoji:"🚄",headline:"Shinkansen have run for 60 years with zero fatalities from derailment",detail:"The bullet train network (2,765 km) has operated since 1964 with a perfect safety record for passenger deaths from derailment. Average delay: 54 seconds across all trains."},
+],
+"China":[
+  {emoji:"🏯",headline:"The Great Wall took 2,000 years to build — 21,196 km total",detail:"Construction spanned from the 7th century BC to the 17th century AD. Millions of workers died building it; some were buried within the wall itself."},
+  {emoji:"🐼",headline:"Giant pandas have existed for 2–3 million years — older than Homo sapiens",detail:"Giant pandas predate modern humans. Fewer than 1,900 remain in the wild, confined to Sichuan's mountains. They spend 14 hours daily eating bamboo to compensate for their inefficient digestion."},
+  {emoji:"🚄",headline:"China built 40,000 km of high-speed rail — more than the rest of the world combined",detail:"Beijing to Shanghai (1,300 km) takes 4.5 hours at up to 350 km/h. The US has zero dedicated high-speed rail lines. China's first HSR line opened in 2008."},
+],
+"Australia":[
+  {emoji:"🦘",headline:"There are more kangaroos than people in Australia",detail:"Australia's 50 million kangaroos outnumber its 26 million people by 2:1. They are the only large animals that use hopping as their primary means of locomotion — and can't walk backwards."},
+  {emoji:"🪸",headline:"The Great Barrier Reef is the world's largest living structure — visible from space",detail:"The 2,300 km reef contains 2,900 individual reefs and 900 islands. It is the world's biggest single structure made by living organisms, supporting 1,500 fish species and 4,000 mollusc types."},
+  {emoji:"🌏",headline:"Australia is the only country that is also a continent",detail:"Australia is simultaneously an island, a country, and a continent. Its interior is so remote that some parts haven't been formally surveyed. The Nullarbor Plain has the world's longest straight road — 146 km."},
+],
+"Brazil":[
+  {emoji:"🌿",headline:"The Amazon covers 40% of Brazil — 10% of Earth's species live here",detail:"The Brazilian Amazon contains 10% of all species on Earth. A single hectare can have more tree species than all of northern Europe. The river discharges 20% of all freshwater entering the world's oceans."},
+  {emoji:"🎭",headline:"Rio Carnival is the world's largest carnival — 2 million people per day",detail:"Rio Carnival draws 2 million street participants daily for 5 days. The Sambadrome was designed by Oscar Niemeyer in 1984. 80,000 participants compete in the official Samba parade each year."},
+  {emoji:"🏆",headline:"Brazil has won the FIFA World Cup 5 times — more than any other nation",detail:"Brazil is the only country to have played in every FIFA World Cup. Pelé scored his first World Cup goal at 17 — the youngest goal scorer in World Cup history."},
+],
+"India":[
+  {emoji:"🛕",headline:"India has 2 million temples — one new one opens every 20 minutes",detail:"India has more places of worship than any other country. The Golden Temple in Amritsar feeds 100,000 people daily regardless of religion — the world's largest free kitchen, running since the 16th century."},
+  {emoji:"🌶️",headline:"India produces 80% of the world's spices — and invented zero",detail:"India contributed the mathematical concept of zero to the world around 458 AD. It also gave us chess, yoga, cotton textiles, and the decimal system."},
+  {emoji:"🚂",headline:"Indian Railways is the world's largest employer — 1.4 million staff",detail:"India's rail network spans 67,000 km. 22 million passengers travel daily — equivalent to moving Australia's entire population. Trains are so culturally central that 'Train Cancelled' trends on Twitter nationally."},
+],
+"Thailand":[
+  {emoji:"🐘",headline:"Thailand has 3,800 domesticated elephants — a 4,000-year tradition",detail:"The Asian elephant has been central to Thai culture for 4,000 years. Thailand's white elephants are considered sacred — historical Thai kings' power was partly measured by how many white elephants they owned."},
+  {emoji:"🍜",headline:"Thailand has 10,000 street food stalls in Bangkok alone",detail:"Bangkok's Chinatown (Yaowarat) has the world's highest density of street food per km². The city received its first Michelin Guide in 2017 — and awarded stars to a street food stall charging $1.50 per dish."},
+  {emoji:"🏯",headline:"Thailand was never colonized by a European power",detail:"Thailand (Siam) successfully maintained independence while every surrounding country was colonized. King Chulalongkorn (Rama V) played European powers against each other so skillfully that Thailand remained a buffer state."},
+],
+"Mexico":[
+  {emoji:"🌮",headline:"Mexico has the world's most complex cuisine — UNESCO-listed",detail:"Mexican cuisine is one of only two in the world (with French) formally recognized by UNESCO as intangible cultural heritage. Mole negro has over 30 ingredients. Chocolate, vanilla, and avocado were all invented here."},
+  {emoji:"🌵",headline:"Mexico City is sinking 10 cm per year — built on a drained lake",detail:"Mexico City was built on Aztec Tenochtitlán, which sat on a lake. The city has been slowly sinking since the Spanish drained the lake. Some areas have sunk 10 metres since the 1950s."},
+  {emoji:"🎭",headline:"Day of the Dead is 3,000 years old — pre-dating Spanish colonization",detail:"Día de los Muertos has roots in Aztec festivals for the goddess of death. It merged with Spanish Catholic traditions after 1521. UNESCO listed it as intangible cultural heritage in 2008."},
+],
+"Egypt":[
+  {emoji:"🔺",headline:"The Great Pyramid was the world's tallest structure for 3,800 years",detail:"Built around 2560 BC, the Great Pyramid (146 m) held the record until Lincoln Cathedral (1311 AD). It contains 2.3 million stone blocks averaging 2.5 tonnes each. How exactly it was built remains partially debated."},
+  {emoji:"😺",headline:"Ancient Egyptians worshipped cats — killing one was punishable by death",detail:"Cats were considered divine in ancient Egypt. The goddess Bastet had a cat's head. When a household cat died, family members shaved their eyebrows. Exporting cats from Egypt was banned."},
+  {emoji:"💧",headline:"Egypt receives virtually no rainfall — the entire country depends on the Nile",detail:"Egypt gets an average 51 mm of rain per year — almost entirely along the Mediterranean coast. 95% of Egyptians live within a few km of the Nile. Without it, Egypt would be uninhabitable."},
+],
+"South Africa":[
+  {emoji:"💎",headline:"South Africa produces 80% of the world's platinum and 10% of its gold",detail:"The Witwatersrand reef (Johannesburg area) is the world's largest known gold deposit. South Africa also has the world's deepest gold mine — Mponeng at 4 km deep, where rock temperatures reach 60°C."},
+  {emoji:"🦁",headline:"South Africa has the Big Five within 2 hours of a major international airport",detail:"Kruger National Park (19,000 km²) is one of the world's largest game reserves. It hosts all Big Five within range of Johannesburg. It has more mammal species than any national park in Africa."},
+  {emoji:"🌈",headline:"South Africa has 11 official languages — the most of any country",detail:"South Africa's constitution recognizes 11 official languages. The Constitutional Court has ruled cases in all of them. The country is also the only African nation to have voluntarily dismantled a nuclear weapons program."},
+],
+"Greece":[
+  {emoji:"🏛️",headline:"Democracy, philosophy, the Olympics — all invented in one small city",detail:"Athens gave the world democracy (507 BC), the academic tradition (Plato, Aristotle, Socrates), and the Olympic Games (776 BC). Western civilization's foundational ideas trace to a city of ~30,000 people 2,500 years ago."},
+  {emoji:"🌊",headline:"Greece has 6,000 islands — 227 are inhabited",detail:"Greece's 13,676 km of coastline is the longest in the EU and 11th longest globally. No point in Greece is more than 137 km from the sea. The 227 inhabited islands make it Europe's most island-diverse nation."},
+  {emoji:"🫒",headline:"Greece has 165 million olive trees — about 15 per person",detail:"Olive trees have been cultivated in Greece for 6,000 years. Some ancient trees still produce olives. Greece consumes more olive oil per capita than any other nation — 20 litres per person per year."},
+],
+"Morocco":[
+  {emoji:"🕌",headline:"Fez has the world's largest car-free urban area — 156,000 people, no roads",detail:"The Fez el-Bali medina (9th century) is so narrow and ancient that motorized vehicles can't enter. It is the world's largest living medieval city with 9,000 alleys. Over 100 still-active craft guilds operate within it."},
+  {emoji:"🌍",headline:"Africa, Europe, and the Atlantic all meet on Morocco's coast",detail:"Morocco is the only country bordering both the Atlantic and Mediterranean while sitting on a geological boundary between African and Eurasian tectonic plates. The Strait of Gibraltar is 14 km wide at its narrowest."},
+  {emoji:"🎭",headline:"Marrakech's Djemaa el-Fna is the world's oldest living cultural space — UNESCO listed",detail:"Djemaa el-Fna has hosted storytellers, acrobats, musicians, and snake charmers every single evening for 1,000 years. UNESCO designated it the first 'Oral Heritage Site' — a category invented specifically for this square."},
+],
+"Iceland":[
+  {emoji:"🌋",headline:"Iceland has 130 volcanoes — 30 are active right now",detail:"Iceland sits on the Mid-Atlantic Ridge where the Eurasian and North American tectonic plates pull apart at 2.5 cm per year. You can stand with one foot on each plate at Þingvellir. Eruptions happen every 3–5 years on average."},
+  {emoji:"🌅",headline:"The Midnight Sun: 24 hours of daylight in summer — 24 hours of dark in winter",detail:"Northern Iceland is above the Arctic Circle. In June, the sun never fully sets. In December, some towns get only 4 hours of twilight. The Northern Lights (aurora borealis) are visible on 80% of clear winter nights."},
+  {emoji:"📚",headline:"Iceland has the world's highest per-capita book publication rate",detail:"Iceland publishes more books per capita than any country. In December, the country participates in Jólabókaflóðið (Christmas book flood) — gifting books on Christmas Eve and reading through the night. 1 in 10 Icelanders will publish a book."},
+],
+"Norway":[
+  {emoji:"🌊",headline:"Norway has 50,000 islands and 25,148 km of coastline — the world's second longest",detail:"Norway's fjords were carved by glaciers over 2 million years. Sognefjord (204 km long, 1,308 m deep) is Europe's longest and deepest fjord. The total coastline including islands would encircle the globe."},
+  {emoji:"💰",headline:"Norway's sovereign wealth fund owns 1.5% of all publicly listed companies globally",detail:"The Government Pension Fund of Norway ($1.7 trillion) is the world's largest sovereign wealth fund. Every Norwegian citizen is theoretically a millionaire in terms of the fund's per-capita value."},
+  {emoji:"🎿",headline:"Skiing was invented in Norway 4,000 years ago — cave paintings prove it",detail:"Rock carvings in Nordland show skiers from 4,000 BC. The word 'ski' comes from Old Norse. Norway has sent athletes to every Winter Olympics, winning more Winter Olympic medals than any country in history."},
+],
+"Portugal":[
+  {emoji:"🌍",headline:"Portugal colonized 53 countries — its language is spoken by 260 million people",detail:"The Portuguese Empire was the first global empire and the longest-lived colonial power (1415–1999, ending with Macau handover). Portuguese is the official language of 9 countries on 4 continents."},
+  {emoji:"🎵",headline:"Fado music is 200 years old and UNESCO-listed — it means 'fate'",detail:"Fado emerged from the docks of Lisbon in the early 19th century. It expresses saudade — a uniquely Portuguese concept of nostalgic longing. UNESCO listed it as intangible cultural heritage in 2011."},
+  {emoji:"🔵",headline:"Azulejo tiles have covered Portuguese buildings since the 15th century",detail:"Portugal's distinctive blue and white ceramic tiles were introduced from the Moorish Iberian tradition. The 2.3 million azulejo tiles in Porto's São Bento railway station took 11 years to paint."},
+],
+"Switzerland":[
+  {emoji:"⌚",headline":"Switzerland makes $23 billion in watches per year — 50% of global exports",detail:"Switzerland exports 95% of the watches it makes. Despite making fewer than 10% of global watch units, it earns 60% of global watch revenue. Swatch Group, Rolex, and Patek Philippe are all Swiss."},
+  {emoji:"🏔️",headline:"Switzerland has 4 national languages and 26 cantons with their own laws",detail:"German (63%), French (23%), Italian (8%), and Romansh are all official Swiss languages. Each of 26 cantons has its own constitution, parliament, and courts. Switzerland has had direct democracy since 1291."},
+  {emoji:"🔴",headline:"The Swiss Guard has protected the Pope since 1506 — oldest military corps",detail:"Only Catholic Swiss men of good standing may join the Pontifical Swiss Guard. Their Renaissance-era uniform was allegedly designed by Michelangelo. The corps has protected every Pope for 500+ years."},
+],
+"Netherlands":[
+  {emoji:"🌷",headline:"The Netherlands produces 88% of the world's exported cut flowers",detail:"Holland's tulip mania in 1637 was history's first documented speculative bubble — single bulbs sold for the equivalent of a luxury house. Today the Netherlands exports 7.5 billion bulbs per year to 100+ countries."},
+  {emoji:"🚲",headline:"There are more bikes than people in the Netherlands — 23 million bikes",detail:"The Dutch cycle 15 billion km annually. Amsterdam has 500 km of bike lanes and over 800 bridges. 40% of all commutes are made by bicycle — the highest rate of any large city in the world."},
+  {emoji:"💧",headline:"27% of the Netherlands is below sea level — 10 million people live there",detail:"The Dutch have been fighting the sea for 2,000 years. They have 3,700 km of sea dikes and 300 km of sand dunes. The Delta Works is considered one of the Seven Wonders of the Modern World."},
+],
+"Argentina":[
+  {emoji:"💃",headline:"The tango was born in the Buenos Aires slums in the 1880s",detail:"Tango emerged from working-class immigrant neighborhoods in La Boca and San Telmo. Its close embrace and charged sensuality scandalized early audiences. It's now danced in 200+ countries."},
+  {emoji:"🥩",headline:"Argentina eats more beef per capita than any country — 50 kg per person per year",detail:"Argentine beef is considered the world's finest by many chefs. The Pampas grasslands provide natural grazing. A traditional asado (barbecue) can last all day and is a national social institution."},
+  {emoji:"🏔️",headline:"Aconcagua (6,961 m) is the highest mountain outside Asia",detail:"The Western Hemisphere's highest peak sits in the Andes near the Chile border. It's a non-technical climb but kills several dozen climbers per year due to altitude and extreme weather."},
+],
+"Canada":[
+  {emoji:"🍁",headline:"Canada has 20% of the world's freshwater — and 10% of its forests",detail:"Canada contains more lakes than all other countries combined. Its forests store 15% of all carbon in the world's forest biomass. The Trans-Canada Highway is 7,821 km — the world's longest national highway."},
+  {emoji:"🏒",headline:"Hockey is technically Canada's national winter sport — lacrosse is the summer sport",detail:"The Stanley Cup was donated by a Canadian Governor General in 1892. Canada has won Olympic gold in ice hockey more than any other nation. Ice hockey is played in 73 countries worldwide."},
+  {emoji:"🌌",headline:"Canada has the world's second-darkest sky — the best Northern Lights viewing outside Iceland",detail:"With 10 million km² of wilderness, Canada has vast areas of zero light pollution. Yukon and Manitoba are among the best aurora viewing locations on Earth. Some areas see the Northern Lights 200+ nights per year."},
+],
+"Turkey":[
+  {emoji:"🌏",headline:"Istanbul straddles two continents — the only city that does",detail:"Istanbul sits on both Europe (Thrace) and Asia (Anatolia), split by the Bosphorus Strait. It has been the capital of the Byzantine Empire, Ottoman Empire, and modern Turkey — three of history's greatest civilizations."},
+  {emoji:"🫖",headline:"Turkey drinks more tea per capita than any country — 3.2 kg per person per year",detail:"Turks drink 2.7 billion kg of tea annually. The samovar (tea urn) is central to Turkish hospitality. Turkish tea (çay) is brewed in a double-boiler system and drunk from tulip-shaped glasses throughout the day."},
+  {emoji:"🎈",headline:"Cappadocia's fairy chimneys formed from volcanic ash 60 million years ago",detail:"The surreal landscape of Cappadocia formed when volcanic eruptions deposited ash that hardened into tufa rock. Erosion created the distinctive mushroom-shaped 'fairy chimneys.' Early Christians carved entire underground cities into the soft rock."},
+],
+"UAE":[
+  {emoji:"🏙️",headline:"Dubai's Burj Khalifa (828 m) stands where there was desert 30 years ago",detail:"The UAE was mostly desert with small fishing villages when oil was discovered in 1958. The Burj Khalifa was built in just 6 years (2004–2010). The UAE has built more skyscrapers in 30 years than most countries built in 300."},
+  {emoji:"🦅",headline:"Falconry practiced here for 2,000 years — falcons worth $500,000+",detail:"UAE falconry is UNESCO-listed as intangible heritage. Emirati falcons are among the world's most valuable animals. Abu Dhabi Falcon Hospital treats 11,000+ birds annually — the world's largest falcon medical facility."},
+  {emoji:"🚀",headline:"UAE sent a spacecraft to Mars in 2021 — only the 5th nation to reach Mars orbit",detail:"The Emirates Mars Mission (Hope Probe) entered Mars orbit in February 2021 — making the UAE the 5th space agency to achieve this, completing the mission in just 6 years from concept to orbit."},
+],
+"Russia":[
+  {emoji:"🗺️",headline:"Russia spans 11 time zones — 17.1 million km², 11% of Earth's land",detail:"When it's midnight in Moscow, it's 7 AM the next day in Vladivostok. Russia is larger than Pluto. Its Siberian taiga is the world's largest forest — bigger than the Amazon."},
+  {emoji:"🚀",headline:"First satellite, first human in space, first spacewalk — all Russian",detail:"The USSR launched Sputnik (1957), sent Yuri Gagarin to space (1961), and Alexei Leonov performed the first spacewalk (1965). For a decade, the USSR led humanity's greatest technological endeavor."},
+  {emoji:"🌊",headline:"Lake Baikal holds 20% of Earth's unfrozen freshwater",detail:"Baikal (1,642 m deep, 25 million years old) contains more freshwater than all North America's Great Lakes combined. 80% of its 3,600 known species exist nowhere else on Earth."},
+],
+"Kenya":[
+  {emoji:"🦁",headline:"Masai Mara hosts the world's greatest wildlife migration — 2 million animals",detail:"Every year 1.5 million wildebeest, 200,000 zebras, and 500,000 gazelles migrate between Tanzania's Serengeti and Kenya's Masai Mara — the world's largest mammal migration, unchanged for millions of years."},
+  {emoji:"🏃",headline:"Kenya produces world record distance runners — at every major championship",detail:"Kenyan athletes have dominated long-distance running since the 1960s. The reason: altitude training at 2,400 m elevation in the Rift Valley, genetic factors, and lifelong distance running to school (often 20+ km daily)."},
+  {emoji:"🌍",headline:"The Rift Valley in Kenya is where Homo sapiens was born",detail:"Kenya's Rift Valley has yielded some of the world's oldest human fossils. Fossils of Homo habilis, Homo erectus, and early Homo sapiens have been found here — the cradle of all humanity."},
+],
+"Nigeria":[
+  {emoji:"🎬",headline:"Nollywood is the world's second-largest film industry by volume",detail:"Nigeria produces 2,500+ films per year — more than Hollywood, second only to India's Bollywood in output. Nollywood reaches 500 million viewers across Africa. It is estimated to employ 1 million people."},
+  {emoji:"🌍",headline:"Nigeria will be the world's third most populous country by 2050",detail:"Nigeria's 220 million people are growing by 6 million annually. By 2100 Nigeria may have 800 million people — more than all of Europe combined. Lagos alone adds 600,000 new residents every year."},
+  {emoji:"🎵",headline:"Afrobeats is the world's fastest-growing music genre — born in Lagos",detail:"Afrobeats artists like Burna Boy, WizKid, and Davido have achieved global chart dominance. The genre blends Yoruba rhythms with hip-hop and R&B. Lagos's music scene processes $1 billion in annual revenue."},
+],
+"South Korea":[
+  {emoji:"📱",headline:"South Korea has the world's fastest internet — and invented K-drama",detail:"South Korea has the world's highest internet penetration rate. K-drama and K-pop (BTS, BLACKPINK) are now global phenomena worth $10 billion annually. Korea invented the world's first metal movable type printing in 1234 — 200 years before Gutenberg."},
+  {emoji:"🌶️",headline:"South Koreans eat 2 million tonnes of kimchi per year — 22 kg per person",detail:"Kimchi (fermented vegetables) is served at virtually every Korean meal, including breakfast. There are over 200 varieties. The kimchi-making tradition (kimjang) is UNESCO-listed intangible cultural heritage."},
+  {emoji:"🏆",headline:"South Korea went from one of the world's poorest to a G20 economy in one generation",detail:"After the Korean War (1953), South Korea had lower GDP per capita than Ghana. In 60 years it became the world's 12th largest economy. This 'Miracle on the Han River' is the fastest economic development in recorded history."},
+],
+"Singapore":[
+  {emoji:"🌆",headline:"Singapore went from Third World to First World in 30 years under one PM",detail:"Lee Kuan Yew transformed Singapore from a malarial swamp colony into the world's most competitive economy in one generation. In 1965 it had no natural resources, no freshwater, no hinterland. Today GDP per capita exceeds $65,000."},
+  {emoji:"🌿",headline:"Singapore is the world's only city-state with rainforest in its urban area",detail:"The Bukit Timah Nature Reserve contains more plant species than the entire North American continent in 1.64 km². Singapore has aggressively planted 300,000+ trees since the 1960s — its 'City in a Garden' vision."},
+  {emoji:"🍜",headline:"Singapore has more Michelin-starred hawker stalls than anywhere else",detail:"Hawker Chan became the world's cheapest Michelin-starred meal at $2.00 for chicken rice. Singapore's hawker culture — communal open-air food centers — is UNESCO-listed and serves every cuisine from 90+ countries."},
+],
+"Vietnam":[
+  {emoji:"🍜",headline:"Vietnam has 500+ regional dishes — pho is only 100 years old",detail:"Pho originated in northern Vietnam around 1910, influenced by French pot-au-feu. Vietnam has 500+ regional specialties. Hội An has the world's highest density of unique regional foods in a single small town."},
+  {emoji:"🛵",headline:"Vietnam has 72 million motorbikes — more per capita than almost anywhere",detail:"Ho Chi Minh City alone has 9 million registered motorbikes. Traffic intersections in Hanoi operate without lights through collective negotiation. The country has embraced electric scooters faster than almost any Asian nation."},
+  {emoji:"🌊",headline:"Halong Bay has 1,969 limestone islands — formed over 20 million years",detail:"Halong Bay's islands formed when limestone dissolved and collapsed, leaving these dramatic pinnacles. UNESCO-listed twice (1994 and 2000). The name means 'Descending Dragon' in Vietnamese legend."},
+],
+"Peru":[
+  {emoji:"🏔️",headline:"Machu Picchu was built in 1450 and abandoned 100 years later — Europeans didn't know it existed until 1911",detail:"The Inca citadel at 2,430 m was never found by Spanish conquistadors. Hiram Bingham 'discovered' it in 1911 guided by local farmers who knew it was there. It was occupied for only about 100 years."},
+  {emoji:"🌽",headline:"Peru gave the world potatoes, corn, tomatoes, and quinoa",detail:"The Inca cultivated 3,000+ varieties of potato. The Columbian Exchange — the transfer of foods from the Americas to Europe — fundamentally changed global diet and population. European life expectancy rose measurably after potatoes arrived."},
+  {emoji:"🦙",headline:"The Nazca Lines are 2,000 years old — visible only from the air",detail:"The Nazca Lines cover 450 km² of Peruvian desert with geoglyphs of animals, plants, and geometric shapes. The largest are 370 m long. Their purpose remains debated — astronomical calendar, religious ritual, or alien landing strips (the latter is not serious)."},
+],
+"Indonesia":[
+  {emoji:"🌋",headline:"Indonesia has 127 active volcanoes — the most of any country",detail:"Indonesia straddles the Pacific Ring of Fire. The 1883 Krakatoa eruption lowered global temperatures by 1.2°C for a year and was heard 4,800 km away. The 1815 Tambora eruption caused 1816 to be called 'The Year Without a Summer.'"},
+  {emoji:"🏝️",headline:"Indonesia has 17,508 islands — the world's largest archipelago",detail:"Spread across 5,100 km of ocean, Indonesia has more islands than any country. Only 6,000 are inhabited. Its maritime territory is larger than the continental US. It spans 3 time zones."},
+  {emoji:"🦧",headline:"Borneo's orangutans share 97% of human DNA — and are critically endangered",detail:"Orangutans are the world's most intelligent non-human primates by some measures. They use tools, make plans, and teach skills to their young. Deforestation has reduced their population by 50% in 60 years."},
+],
+"Iceland":[
+  {emoji:"🌋",headline:"Iceland has 130 volcanoes — 30 active simultaneously",detail:"Iceland sits on the Mid-Atlantic Ridge. You can stand with one foot on the Eurasian plate and one on the North American plate at Þingvellir. The plates are pulling apart at 2.5 cm per year."},
+  {emoji:"🌅",headline:"24 hours of daylight in summer — 24 hours of dark in winter",detail:"Northern Iceland is above the Arctic Circle. In June, the sun never fully sets. The Northern Lights are visible on 80% of clear winter nights. Iceland also has 9 months of reindeer-free Christmas commercials."},
+  {emoji:"📚",headline:"World's highest per-capita book publication rate — 1 in 10 Icelanders will write a book",detail:"Iceland publishes more books per capita than any country. Jólabókaflóðið (Christmas Book Flood) is a December tradition of gifting books and reading through Christmas Eve night."},
+],
+"New Zealand":[
+  {emoji:"🎬",headline:"New Zealand has more film locations per km² than anywhere",detail:"The Lord of the Rings and The Hobbit trilogies brought $500 million to New Zealand. Peter Jackson chose it because it has every landscape type on Earth within small distances — volcanoes, fjords, beaches, forests."},
+  {emoji:"🐑",headline:"New Zealand has 5 sheep per person — 6x the human population",detail:"New Zealand has 29 million sheep for 5 million people. At its peak in 1982 it had 70 million — 22 per person. New Zealand also gave women the vote in 1893 — the first country in the world to do so."},
+  {emoji:"🌊",headline:"New Zealand is the most geographically isolated large country on Earth",detail:"The nearest large landmass is Australia, 2,000 km away. New Zealand separated from Gondwana 80 million years ago — so long that its wildlife evolved in complete isolation. 75% of its birds are endemic."},
+],
+"Colombia":[
+  {emoji:"☕",headline:"Colombia is the world's third-largest coffee producer — and the only one that grows all year",detail:"Colombia's geography (equatorial with varied altitude) allows coffee harvesting year-round. Colombian coffee is the only one marketed globally by a fictional character — Juan Valdez, invented in 1958."},
+  {emoji:"🌺",headline:"Colombia is the world's most biodiverse country per km²",detail:"Despite covering only 0.8% of Earth's surface, Colombia has 10% of its species. It has more bird species than any country (1,900+), more orchid species (4,270+) than anywhere, and 50,000+ plant species."},
+  {emoji:"💃",headline:"Carnival de Barranquilla is the world's second-largest carnival after Rio",detail:"Barranquilla Carnival draws 2 million participants over 4 days. It blends indigenous, African, and European traditions in music and dance that UNESCO formally recognized as intangible cultural heritage in 2003."},
+],
+"Cuba":[
+  {emoji:"🚗",headline:"Cuba's vintage car fleet — 70,000+ American cars from the 1950s still running",detail:"US trade embargo since 1962 froze Cuba's car market. Cubans became the world's most skilled vintage car mechanics. The island is now a living museum of 1950s American automotive design."},
+  {emoji:"💊",headline:"Cuba has more doctors per capita than any country — and exports medicine globally",detail:"Cuba has 8.4 doctors per 1,000 people — the world's highest ratio. It exports doctors to 60+ countries under health agreements. Cuba developed the world's first meningitis B vaccine in 1987."},
+  {emoji:"🎵",headline:"Cuba gave the world salsa, rumba, cha-cha, mambo, and son",detail:"Cuban music has transformed global popular culture multiple times. The Buena Vista Social Club recordings (1996) introduced traditional Cuban son to a new global audience. Cuba's musical influence is wholly disproportionate to its size."},
+],
+"Kenya":[
+  {emoji:"🦁",headline:"Masai Mara hosts the world's greatest wildlife migration",detail:"1.5 million wildebeest, 200,000 zebras, and 500,000 gazelles migrate annually — unchanged for millions of years. The wildebeest crossing of the Mara River is one of Earth's most dramatic natural events."},
+  {emoji:"🏃",headline:"Kenyan distance runners dominate all global championships",detail:"Kenya has produced more world record holders in distance running than all other countries combined. The Rift Valley's altitude training (2,400 m) and lifelong running culture produce athletes of extraordinary natural endurance."},
+  {emoji:"🌍",headline:"The Rift Valley is where Homo sapiens was born",detail:"Kenya's Rift Valley has yielded some of the world's oldest human fossils — including a 1.6 million year old Homo erectus skeleton found at Lake Turkana. This is the geographic cradle of all humanity."},
+],
+"Tanzania":[
+  {emoji:"🏔️",headline:"Kilimanjaro is the world's tallest freestanding mountain — and has glaciers disappearing",detail:"Mount Kilimanjaro (5,895 m) rises 5 km from surrounding plains without any other mountain range. Its glaciers have retreated 82% since 1912. At current rates, the ice cap will be gone by 2040."},
+  {emoji:"🦁",headline:"The Serengeti has 1.5 million wildebeest — the world's largest lion population",detail:"Tanzania's Serengeti (14,763 km²) hosts the world's largest lion population — 3,000+. The annual migration circles 1,200 km. The ecosystem is so intact it's been called 'the last place on Earth.'"},
+  {emoji:"🌊",headline:"Zanzibar was the last place in the world to legally abolish slavery — 1897",detail:"Zanzibar was East Africa's main slave trading port for 1,200 years. The sultan's palace is 200 m from the original slave market. British anti-slavery pressure finally ended the trade in 1897."},
+],
+"Morocco":[
+  {emoji:"🕌",headline:"Fez has the world's largest car-free urban area",detail:"The Fez el-Bali medina (9th century AD) is so narrow motorized vehicles can't enter. 9,000 alleys house 150,000 people. Over 100 still-active medieval craft guilds operate within — making the same products the same way for 1,000 years."},
+  {emoji:"🌍",headline:"Africa, Europe, and the Atlantic all converge here",detail:"Morocco is the only country bordering both the Atlantic and Mediterranean while sitting on a geological boundary between African and Eurasian plates. Spain is only 14 km away at the Strait of Gibraltar."},
+  {emoji:"🎭",headline:"Marrakech's Djemaa el-Fna: world's oldest living cultural space",detail:"Djemaa el-Fna has hosted storytellers, musicians, and snake charmers every evening for 1,000 years without interruption. UNESCO designated it the first 'Oral Heritage Site' — a category invented specifically for this square."},
+],
+"Israel":[
+  {emoji:"🌊",headline:"The Dead Sea is Earth's lowest point — and its water evaporates before it can leave",detail:"The Dead Sea shore sits 430 m below sea level — the world's lowest point. With 34.2% salinity (10× the ocean), nothing lives in it. The Jordan River is its only inlet; the water simply evaporates. The sea is shrinking by 1 m per year."},
+  {emoji:"🌍",headline:"Israel has more tech companies listed on NASDAQ than any non-US country except China",detail:"With 9 million people, Israel has more startups per capita than anywhere on Earth — one per 1,400 people. Intel's most important processor chips (Core, Pentium) were all designed in Haifa."},
+  {emoji:"🕌",headline:"Jerusalem is the world's only city considered holy by three major religions simultaneously",detail:"Islam, Christianity, and Judaism all consider Jerusalem a sacred center. The Old City (1 km²) contains the Western Wall, Church of the Holy Sepulchre, and Al-Aqsa Mosque — all within walking distance."},
+],
+"Saudi Arabia":[
+  {emoji:"🛢️",headline:"Saudi Aramco produces 10% of the world's oil — and is worth $2 trillion",detail:"Saudi Arabia has the world's second-largest proven oil reserves. Aramco's 2019 IPO was the world's largest ever ($25.6 billion). The Ghawar field alone has produced more oil than any other field in history."},
+  {emoji:"🕌",headline:"Mecca receives 2.5 million pilgrims in one week — the world's largest annual gathering",detail:"The Hajj pilgrimage to Mecca is one of Islam's Five Pillars. During peak Tawaf (circumambulation of the Kaaba), 100,000+ people circle simultaneously. Non-Muslims are banned from entering Mecca's city limits."},
+  {emoji:"🏙️",headline:"Saudi Arabia is building a 170 km long city — The Line — in the desert",detail:"The Line is a $500 billion megaproject: a 500 m high, 200 m wide, 170 km long linear city planned for 9 million residents with no cars. Construction began in 2022 on the Tabuk Province desert."},
+],
+"Egypt":[
+  {emoji:"🔺",headline:"The Great Pyramid was Earth's tallest structure for 3,800 years",detail:"Built around 2560 BC at 146 m, it held the record until Lincoln Cathedral (1311 AD). It contains 2.3 million stone blocks averaging 2.5 tonnes. The precision of its orientation (0.05° off true north) baffles modern engineers."},
+  {emoji:"😺",headline:"Ancient Egyptians worshipped cats — killing one was punishable by death",detail:"Cats were divine in ancient Egypt. The goddess Bastet had a cat's head. When a household cat died, family members shaved their eyebrows in mourning. Exporting cats from Egypt was banned throughout the dynastic period."},
+  {emoji:"💧",headline:"Egypt receives virtually zero rainfall — the entire civilization depends on the Nile",detail:"Egypt averages 51 mm of rain per year. 95% of Egyptians live within a few km of the Nile. Without it, Egypt would be uninhabitable. The Nile has flooded reliably every year for 7,000 years — until the Aswan Dam (1970)."},
+],
+"Sweden":[
+  {emoji:"🌲",headline:"Sweden has more forest per person than almost any country in Europe",detail:"55% of Sweden is covered in forest. The country has more reindeer (250,000) than wolves. The law of Allemansrätten gives everyone the right to roam freely in any forest, field, or lake regardless of ownership."},
+  {emoji:"💡",headline:"Sweden invented the seatbelt, zipper, Bluetooth, Skype, and Spotify",detail:"Nils Bohlin invented the 3-point seatbelt at Volvo in 1959 — he then gave the patent away free, saving millions of lives. Sweden has produced more Nobel laureates per capita than any country except Switzerland."},
+  {emoji:"🌅",headline:"IKEA, H&M, Spotify, Klarna, Oatly — Sweden creates global brands per capita at world-record rates",detail:"Sweden's 10 million people have produced $100B+ companies at a per-capita rate exceeded only by Silicon Valley. Stockholm has more tech unicorns per capita than any city outside San Francisco."},
+],
+"Ukraine":[
+  {emoji:"🌻",headline:"Ukraine grows 15% of the world's wheat and is called 'Europe's breadbasket'",detail:"Ukraine's black soil (chernozem) is the world's most fertile — it constitutes 30% of global chernozem reserves. Ukraine exports grain to 130+ countries. Its 2022 invasion blocked 25% of global wheat exports overnight."},
+  {emoji:"🏛️",headline:"Kyiv's St. Sophia Cathedral has mosaics from 1037 AD — older than the Normans in England",detail:"Kyiv was one of medieval Europe's largest and most cultured cities when Paris was a small town. The Kyiv-Pechersk Lavra monastery cave complex contains the naturally mummified remains of monks from the 11th century."},
+  {emoji:"🌍",headline:"Ukraine is Europe's largest country by area — bigger than France",detail:"At 603,628 km², Ukraine is larger than France. Its population before 2022 was 44 million. The Ukrainian language has its own literary tradition dating to the 14th century, distinct from Russian despite geographical proximity."},
+],
+"Czech Republic":[
+  {emoji:"🍺",headline:"Czech Republic has the world's highest beer consumption per capita — 142 litres per person",detail:"The Czech Republic has drunk more beer per person than any other country every single year for 20+ years. Pilsner was invented in Plzeň in 1842, fundamentally transforming global brewing. Czech lager is considered the world's original premium beer."},
+  {emoji:"🏰",headline:"Prague Castle is the world's largest ancient castle — 70,000 m²",detail:"Prague Castle has been continuously inhabited since the 9th century. The complex (70,000 m²) houses multiple palaces, churches, galleries, and the official residence of the Czech president. At night it is lit against the skyline."},
+  {emoji:"🤖",headline:"The word 'robot' was invented by a Czech writer in 1920",detail:"Karel Čapek coined 'robot' (from robota — 'drudgery') in his 1920 play R.U.R. about artificial workers who revolt against their creators. It's one of the most influential science fiction concepts ever written — predating all AI research."},
+],
+"Hungary":[
+  {emoji:"♨️",headline:"Budapest has 118 thermal springs — and 14 public bath houses in the city center",detail:"Budapest sits on geothermal fault lines. The Romans built baths here 2,000 years ago. The Széchenyi thermal bath (1913) is the world's largest medicinal bath. Bathing culture is UNESCO-recognized intangible heritage."},
+  {emoji:"🧩",headline:"The Rubik's Cube was invented in Budapest in 1974",detail:"Ernő Rubik, a Hungarian architecture professor, created the cube as a teaching tool. It became the world's best-selling puzzle toy — 400 million sold. The world record for solving it is 3.13 seconds (2023)."},
+  {emoji:"🌶️",headline:"Hungary invented paprika and it's central to every Hungarian dish",detail:"Hungarian sweet and hot paprika are the country's signature spice — used in goulash, chicken paprikash, and lángos. Albert von Nagyrápolt isolated Vitamin C from paprika in Hungary — and won the Nobel Prize for it in 1937."},
+],
+"Poland":[
+  {emoji:"🥟",headline:"Poland invented pierogi, bigos, and żurek — beloved across Eastern Europe",detail:"Polish cuisine is one of Eastern Europe's most influential. Pierogi (dumplings) come in 200+ varieties. Poland also invented the croissant — which entered Viennese baking after the Ottoman siege of Vienna (1683) was lifted by Polish-led forces."},
+  {emoji:"🌌",headline:"Nicolaus Copernicus was Polish — he moved the Earth from the center of the universe",detail:"Copernicus (1473–1543) proposed heliocentrism in De Revolutionibus. His idea that Earth orbits the Sun — not vice versa — is one of the most consequential scientific ideas ever published. The Catholic Church banned his book until 1835."},
+  {emoji:"🏰",headline:"Kraków's Wieliczka Salt Mine has been operating continuously since the 13th century",detail:"The 300 km of tunnels include a full underground cathedral, chandelier room, and museum carved entirely from salt. Salt from Wieliczka helped fund the Polish state for 500 years. It's been UNESCO-listed since 1978."},
+],
+"Austria":[
+  {emoji:"🎵",headline:"Vienna produced Mozart, Beethoven, Brahms, Schubert, and Strauss simultaneously",detail:"The Vienna Philharmonic, founded 1842, is considered the world's finest orchestra. Vienna was the musical capital of the world for 200 years. The 'Viennese waltz' is UNESCO-listed intangible cultural heritage."},
+  {emoji:"🏰",headline:"Austria invented the croissant — not France",detail:"The croissant was created in Vienna in 1683 to celebrate the defeat of the Ottoman siege. Its crescent shape mocked the Ottoman crescent. Marie Antoinette brought the recipe to France when she married Louis XVI."},
+  {emoji:"🏔️",headline:"Austria has 700 km of marked ski runs — more than any country relative to its size",detail:"Austria is the world's most-skied country per capita. Lech, Kitzbühel, and St Anton are among the world's most challenging resorts. Austria hosted the 1964 and 1976 Winter Olympics in Innsbruck."},
+],
+"Denmark":[
+  {emoji:"🏰",headline:"Christiansborg Palace has been the seat of Danish power for 800 years",detail:"Denmark has the world's oldest continuously used flag (1370). The Danish design tradition (Arne Jacobsen, Bang & Olufsen, LEGO) is considered the world's most influential in industrial design per capita."},
+  {emoji:"🚲",headline:"Copenhagen has more bikes than people — and 396 km of dedicated bike lanes",detail:"62% of Copenhagen residents cycle to work or school daily. The city has more bikes than cars. Denmark is consistently ranked the world's most cycle-friendly country, with cycling infrastructure that other cities study."},
+  {emoji:"🌍",headline:"Denmark consistently ranks first or second in global happiness",detail:"Denmark has ranked in the top 3 of the World Happiness Report every year since its inception. The concept of hygge (cozy togetherness) — embraced globally — is the core of Danish social philosophy."},
+],
+"Finland":[
+  {emoji:"🧖",headline:"Finland has 3.3 million saunas for 5.5 million people",detail:"There are more saunas than cars in Finland. Sauna culture is UNESCO-listed as intangible heritage — practically sacred in Finnish life. The Finnish word for sauna is the only Finnish word in common use internationally."},
+  {emoji:"🌅",headline:"Finland has 187,888 lakes — one lake for every 28 people",detail:"Finland is the world's most lake-dense country. In summer, the midnight sun shines for months in Lapland. In winter, polar night (kaamos) lasts weeks — only twilight during daylight hours."},
+  {emoji:"🎮",headline:"Finland created Nokia, Linux, Angry Birds, and Clash of Clans",detail:"A country of 5.5 million has produced more significant technology exports per capita than almost any other nation. Linux (Linus Torvalds) runs on 97% of the world's top servers. Nokia was the world's top mobile phone brand for 14 years."},
+],
+"Belgium":[
+  {emoji:"🍫",headline:"Belgium has 2,000 chocolate shops and makes 220,000 tonnes per year",detail:"Belgium produces 220,000 tonnes of chocolate annually — the most per capita. The 'Belgian chocolate' standard (minimum 35% cocoa) is the world's highest regulated quality threshold. Brussels Airport is the world's largest chocolate selling point."},
+  {emoji:"🍺",headline:"Belgium has 1,500 distinct beer varieties — more per km² than any country",detail:"Belgian beer culture is UNESCO-listed. Trappist monasteries produce some of the world's rarest beers. The Belgian brewing tradition of wild-fermentation Lambic beers is found nowhere else on Earth."},
+  {emoji:"🌍",headline:"Brussels hosts the EU, NATO, and 1,400 international organizations",detail:"Brussels is the de facto capital of the European Union with 22% of its population being EU civil servants or lobbyists. Belgium has been invaded by virtually every European power — and rebuilt every time."},
+],
+"Portugal":[
+  {emoji:"🌍",headline:"Portugal colonized 53 countries — its language is spoken by 260 million people",detail:"The Portuguese Empire was the world's first global empire and the longest-lived colonial power (1415–1999). Portuguese is the official language of 9 countries on 4 continents including Brazil, Angola, and Mozambique."},
+  {emoji:"🎵",headline:"Fado music is UNESCO-listed — it means 'fate' and expresses uniquely Portuguese longing",detail:"Fado emerged from Lisbon's docks in the early 19th century. It expresses saudade — a concept of nostalgic longing with no direct English equivalent. Amália Rodrigues, the 'Queen of Fado,' was given a state funeral."},
+  {emoji:"🔵",headline:"Azulejo tiles cover Portuguese buildings since the 15th century",detail:"Portugal's distinctive blue-and-white ceramic tiles (azulejos) were introduced from Moorish tradition. Porto's São Bento railway station has 2.3 million tiles depicting Portuguese history — taking 11 years to paint."},
+],
+"Romania":[
+  {emoji:"🧛",headline:"Transylvania's Dracula was based on a real Romanian ruler — Vlad the Impaler",detail:"Vlad III of Wallachia (1428–1477) impaled thousands of enemies on stakes — including once staking 20,000 Ottoman troops before a battle to demoralize the approaching army. Bram Stoker used the historical character loosely for his 1897 novel."},
+  {emoji:"🌿",headline:"Romania has Europe's largest areas of old-growth forest outside Russia",detail:"The Carpathian Mountains contain Europe's largest wolf, bear, and lynx populations outside Russia. Virgil and Ovid wrote about these lands as the mysterious edge of the civilized world."},
+  {emoji:"🏰",headline:"Peleș Castle (1883) is considered the most beautiful castle in Eastern Europe",detail:"Built by King Carol I in the Transylvanian Alps, Peleș combines neo-Renaissance, neo-Gothic, and baroque styles. Its 160 rooms contain 2,000+ paintings, 4,000 weapons, and Europe's first castle with electric lighting."},
+],
+"Croatia":[
+  {emoji:"🌊",headline:"Croatia has 1,246 islands — only 50 are inhabited",detail:"Dalmatia's crystal-clear Adriatic islands are among Europe's most beautiful. The Plitvice Lakes National Park has 16 terraced lakes connected by waterfalls — UNESCO-listed since 1979. Game of Thrones filmed extensively in Dubrovnik and Split."},
+  {emoji:"👔",headline:"The necktie was invented in Croatia — it was a Croatian military accessory",detail:"Croatian soldiers in the Thirty Years War (17th century) wore a distinctive knotted scarf. French troops called it 'à la croate' — which became 'cravate' — and the fashion spread across Europe. October 18 is World Cravat Day."},
+  {emoji:"🔬",headline:"Tesla and Nikola Tesla — both Croatian-Serbian, both from modern Croatia",detail:"Nikola Tesla was born in Smiljan (now Croatia) in 1856. He invented AC electricity, the Tesla coil, radio (disputed with Marconi), and the bladeless turbine. He spoke 8 languages and memorized entire books."},
+],
+"Serbia":[
+  {emoji:"🎺",headline:"Serbia hosts EXIT Festival — one of Europe's largest music festivals",detail:"EXIT Festival in the Petrovaradin Fortress (Novi Sad) draws 200,000+ visitors annually. The fortress was built over 88 years (1692–1780) and has 16 km of underground tunnels."},
+  {emoji:"⚡",headline:"Nikola Tesla was Serbian — and reshaped all electrical infrastructure on Earth",detail:"Tesla (1856–1943) invented AC electricity generation and transmission, the Tesla coil, and early radio. His AC system, defeated by Edison's DC in the 'War of Currents,' ultimately won — and powers everything on Earth today."},
+  {emoji:"🍴",headline:"Serbia has Europe's largest share of organic farmland relative to its agricultural area",detail:"Serbia produces some of Europe's finest raspberries, plums (slivovitz plum brandy is the national drink), and sun-dried peppers. Its cuisine blends Austro-Hungarian, Ottoman, and Balkan traditions."},
+],
+"Bosnia and Herzegovina":[
+  {emoji:"⚔️",headline:"The assassination in Sarajevo triggered World War I",detail:"On June 28, 1914, Archduke Franz Ferdinand was shot by Gavrilo Princip on a Sarajevo street — triggering alliances that killed 20 million people in WWI. A plaque at Latin Bridge marks the exact location today."},
+  {emoji:"☕",headline:"Bosnian coffee ritual is UNESCO-recognized intangible cultural heritage",detail:"Bosnian coffee (bosanska kafa) is served in a džezva — never with milk. The ritual of preparation and sharing is so culturally central that UNESCO formally recognized it as intangible cultural heritage."},
+  {emoji:"🌉",headline:"Mostar's Stari Most was deliberately destroyed in 1993 — rebuilt stone by stone",detail:"The 1566 Ottoman bridge was deliberately shelled in the Bosnian War. It was painstakingly rebuilt using original quarry limestone and traditional techniques, reopening in 2004 as a UNESCO World Heritage Site."},
+],
+"Albania":[
+  {emoji:"🏗️",headline:"173,000 bunkers for 3 million people — never used",detail:"Dictator Enver Hoxha ordered 173,000 concrete bunkers built 1967–1986. They were never used militarily. Today many serve as cafes, mushroom farms, and art installations across the country."},
+  {emoji:"🤝",headline:"Saved more Jews per capita than any Nazi-occupied nation",detail:"Albania's population sheltered virtually every Jewish refugee — driven by the code 'Besa' (keep the promise). Not a single Albanian Jew was deported to the camps. Albania was the only Nazi-occupied country to end WWII with more Jews than it started with."},
+  {emoji:"🦅",headline:"The double-headed eagle on the flag dates to the 15th century hero Skanderbeg",detail:"Albania's double-headed Byzantine eagle was the symbol of national hero Gjergj Kastrioti (Skanderbeg), who resisted Ottoman conquest for 25 years and became a symbol of Christian resistance."},
+],
+"Cyprus":[
+  {emoji:"🐱",headline:"Oldest known domestic cat buried here — 9,500 years ago",detail:"A 2004 excavation found a human buried with a cat 9,500 years ago — 4,000 years before any Egyptian cat evidence. Cyprus may be where humans first intentionally co-habited with domestic cats."},
+  {emoji:"⚗️",headline:"Copper is named after Cyprus — every Cu on the periodic table",detail:"Ancient Cyprus's copper mines supplied the entire Mediterranean world. The Latin 'cuprium aes' (Cyprus metal) gave us 'copper' — meaning Cyprus's name is permanently embedded in chemistry."},
+  {emoji:"🕌",headline:"Last divided capital in the world — Nicosia split since 1974",detail:"A UN buffer zone runs through Nicosia's city center. Abandoned buildings frozen since the 1974 Turkish invasion sit behind barbed wire in the heart of the capital — the last divided city in Europe."},
+],
+"Iceland":[
+  {emoji:"🌋",headline:"Iceland has 130 volcanoes — 30 are active simultaneously",detail:"Iceland sits directly on the Mid-Atlantic Ridge. The plates pull apart 2.5 cm per year. You can stand with one foot on each tectonic plate at Þingvellir National Park."},
+  {emoji:"📚",headline:"1 in 10 Icelanders will publish a book in their lifetime",detail:"Iceland publishes more books per capita than any country. The Christmas Book Flood (Jólabókaflóðið) — giving books on Christmas Eve and reading through the night — is a national tradition."},
+  {emoji:"🌅",headline:"Midnight Sun, Northern Lights, geysers — the world's most geologically active inhabited island",detail:"Iceland has the Northern Lights on 80% of clear winter nights. The Great Geysir (which gave all geysers their name) has erupted every few minutes for centuries. There are 800+ hot springs."},
+],
+"Malta":[
+  {emoji:"🏛️",headline:"World's oldest freestanding structures — older than Stonehenge by 1,000 years",detail:"Malta's Ggantija temples (3600–2500 BC) predate Stonehenge by a millennium and Egypt's pyramids by 500 years — the world's oldest freestanding stone structures, built by a civilization whose name we don't know."},
+  {emoji:"✈️",headline:"Most bombed per km² in WWII — the entire island received the George Cross",detail:"Malta endured 3,000+ Axis air raids in WWII — more bombing per km² than any comparable area. King George VI awarded the entire island the George Cross — the first time a population collectively received the honor."},
+  {emoji:"🌍",headline:"Maltese is the only Semitic language written in the Latin alphabet",detail:"Maltese derives from Siculo-Arabic and is the only Semitic language (related to Arabic and Hebrew) written in the Latin script. It is the EU's only Semitic official language."},
+],
+"Singapore":[
+  {emoji:"🌆",headline:"From malarial swamp to First World in 30 years",detail:"In 1965 Singapore had no natural resources, no freshwater, no hinterland. Today GDP per capita exceeds $65,000 — one of the world's highest. Lee Kuan Yew called it the greatest economic transformation in modern history."},
+  {emoji:"🌿",headline:"Only city-state with rainforest in its urban area",detail:"Bukit Timah Nature Reserve (1.64 km²) has more plant species than the entire North American continent. Singapore has planted 300,000+ trees since the 1960s — its 'City in a Garden' vision made literal."},
+  {emoji:"🍜",headline:"World's cheapest Michelin-starred meal — $2 chicken rice",detail:"Hawker Chan became the world's cheapest Michelin-starred meal at $2.00. Singapore's hawker culture serves food from 90+ countries and is UNESCO-listed intangible cultural heritage."},
+],
+"Maldives":[
+  {emoji:"🌊",headline:"Average 1.5 m above sea level — may be the first climate refugee nation",detail:"The Maldives is the world's lowest-lying country. Most of its 1,200 islands will be uninhabitable within decades at current sea level rise rates. In 2009, President Nasheed held a cabinet meeting underwater to highlight the crisis."},
+  {emoji:"🐋",headline:"South Ari Atoll: world's largest year-round whale shark aggregation",detail:"Scientists have catalogued 400+ individual whale sharks in South Ari Atoll. The Maldives was the first to make whale sharks a protected species — realizing a single live shark earns $2 million in tourism over its lifetime."},
+  {emoji:"🪸",headline:"97% ocean — only 300 km² of actual land in 90,000 km² of sea",detail:"Each Maldivian island averages just 2 km² in size. The exclusive economic zone is 300× larger than the land area — one of the most extreme land-to-ocean ratios on Earth."},
+],
+"Brazil":[
+  {emoji:"🌿",headline:"Amazon contains 10% of all species on Earth",detail:"The Brazilian Amazon has more tree species in one hectare than all of northern Europe. The river discharges 20% of all freshwater entering the world's oceans. It is the planet's lungs and pharmacy combined."},
+  {emoji:"🎭",headline:"Rio Carnival — 2 million street participants per day for 5 days",detail:"The Sambadrome hosts 80,000 Samba parade competitors. The street carnival (Bloco) involves 500+ different parades. Brazil's population of 215 million speaks only one language — an anomaly in South America."},
+  {emoji:"🏆",headline:"5 FIFA World Cup titles — the only country to play in every tournament",detail:"Brazil is the only country to have qualified for all 22 FIFA World Cups. Pelé scored his first goal at age 17 — the youngest scorer in World Cup history. Brazil's football style (jogo bonito) is studied worldwide."},
+],
+};
+
+// ═══════════════════════════════════════════════════════
+// PASSPORT RANKS
+// ═══════════════════════════════════════════════════════
+const RANKS = [
+  {min:0,   max:5,   icon:"🌱", title:"Curious Traveler",     sub:"Just getting started"},
+  {min:6,   max:15,  icon:"🧭", title:"Wanderer",              sub:"The horizon is calling"},
+  {min:16,  max:30,  icon:"✈️", title:"Seasoned Traveler",    sub:"You've got the travel bug"},
+  {min:31,  max:50,  icon:"🗺️", title:"World Adventurer",     sub:"Seriously impressive"},
+  {min:51,  max:75,  icon:"🌍", title:"Continental Master",   sub:"Most people stop here"},
+  {min:76,  max:100, icon:"🌐", title:"Globe Trotter",         sub:"Top 1% of travelers"},
+  {min:101, max:130, icon:"🏆", title:"World Nomad",           sub:"Your passport is legendary"},
+  {min:131, max:160, icon:"⭐", title:"Elite Explorer",        sub:"You've seen it all"},
+  {min:161, max:195, icon:"👑", title:"Legendary",             sub:"A true citizen of Earth"},
+];
+
+const CONTINENT_TOTALS = {
+  Europe:49, Asia:44, Africa:54, Americas:35, Oceania:14
+};
+const CONTINENT_COLORS = {
+  Europe:"#4a9eff", Asia:"#ff6b6b", Africa:"#f0c060", Americas:"#6bff8a", Oceania:"#ff9f4a"
+};
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let visited = new Set();
+const countryMap = {};
+COUNTRIES.forEach(c => countryMap[c.name] = c);
+
+// ═══════════════════════════════════════════════════════
+// THREE.JS GLOBE
+// ═══════════════════════════════════════════════════════
+const canvas = document.getElementById('globe-canvas');
+const globeWrap = document.getElementById('globe-wrap');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x04060e);
+
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+camera.position.z = 3.0;
+
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+const globeGroup = new THREE.Group();
+globeGroup.rotation.order = 'YXZ';
+scene.add(globeGroup);
+
+// Stars
+const starGeo = new THREE.BufferGeometry();
+const starVerts = [];
+for(let i=0;i<3000;i++){
+  const theta = Math.random()*Math.PI*2;
+  const phi = Math.acos(Math.random()*2-1);
+  const r = 40 + Math.random()*20;
+  starVerts.push(
+    r*Math.sin(phi)*Math.cos(theta),
+    r*Math.cos(phi),
+    r*Math.sin(phi)*Math.sin(theta)
+  );
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts,3));
+scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff,size:0.06,transparent:true,opacity:0.7})));
+
+// Base sphere
+const sphere = new THREE.Mesh(
+  new THREE.SphereGeometry(1,64,64),
+  new THREE.MeshPhongMaterial({color:0x0a1628,specular:0x112244,shininess:20})
+);
+globeGroup.add(sphere);
+
+// Grid lines
+globeGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(1.001,36,18),
+  new THREE.MeshBasicMaterial({color:0x1a3a5c,wireframe:true,transparent:true,opacity:0.12})
+));
+
+// Atmosphere (outer glow)
+const atmGeo = new THREE.SphereGeometry(1.18,32,32);
+const atmMat = new THREE.MeshBasicMaterial({
+  color:0x1a5fff, transparent:true, opacity:0.07, side:THREE.BackSide
+});
+scene.add(new THREE.Mesh(atmGeo, atmMat));
+
+// Lights
+scene.add(new THREE.AmbientLight(0x334466, 0.7));
+const sun = new THREE.DirectionalLight(0x88aaff, 1.4);
+sun.position.set(5,3,5);
+scene.add(sun);
+
+// ── lat/lng → Vector3
+function llToV3(lat,lng,r=1.02){
+  const phi = (90-lat)*Math.PI/180;
+  const theta = (lng+180)*Math.PI/180;
+  return new THREE.Vector3(
+    -r*Math.sin(phi)*Math.cos(theta),
+    r*Math.cos(phi),
+    r*Math.sin(phi)*Math.sin(theta)
+  );
+}
+
+// Country markers
+const markerMeshes = {};
+function addMarker(name){
+  if(markerMeshes[name]) return;
+  const c = countryMap[name];
+  if(!c) return;
+  const pos = llToV3(c.lat, c.lng);
+  // Outer glow
+  const outer = new THREE.Mesh(
+    new THREE.SphereGeometry(0.032,8,8),
+    new THREE.MeshBasicMaterial({color:0x00d4c8, transparent:true, opacity:0.3})
+  );
+  outer.position.copy(pos);
+  // Inner dot
+  const inner = new THREE.Mesh(
+    new THREE.SphereGeometry(0.018,8,8),
+    new THREE.MeshBasicMaterial({color:0x00d4c8})
+  );
+  inner.position.copy(pos);
+  globeGroup.add(outer);
+  globeGroup.add(inner);
+  markerMeshes[name] = {outer, inner, baseColor:0x00d4c8};
+}
+
+function removeMarker(name){
+  const m = markerMeshes[name];
+  if(!m) return;
+  globeGroup.remove(m.outer);
+  globeGroup.remove(m.inner);
+  delete markerMeshes[name];
+}
+
+function setMarkerActive(name, active){
+  const m = markerMeshes[name];
+  if(!m) return;
+  const c = active ? 0xe8b84b : 0x00d4c8;
+  m.inner.material.color.setHex(c);
+  m.outer.material.color.setHex(c);
+  m.outer.material.opacity = active ? 0.5 : 0.3;
+  m.inner.scale.setScalar(active ? 1.6 : 1.0);
+  m.outer.scale.setScalar(active ? 1.8 : 1.0);
+}
+
+// ── Resize
+function resize(){
+  const w = globeWrap.clientWidth, h = globeWrap.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+resize();
+new ResizeObserver(resize).observe(globeWrap);
+
+// ── Mouse drag orbit
+let isDragging=false, lastX=0, lastY=0;
+let velX=0, velY=0;
+let autoSpin = true;
+let tourActive = false;
+let targetRotX=0, targetRotY=0;
+
+canvas.addEventListener('mousedown', e=>{
+  if(tourActive) return;
+  isDragging=true; lastX=e.clientX; lastY=e.clientY; velX=velY=0; autoSpin=false;
+});
+window.addEventListener('mousemove', e=>{
+  if(!isDragging) return;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  globeGroup.rotation.y += dx*0.005;
+  globeGroup.rotation.x += dy*0.004;
+  globeGroup.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, globeGroup.rotation.x));
+  velX=dx; velY=dy;
+  lastX=e.clientX; lastY=e.clientY;
+});
+window.addEventListener('mouseup', ()=>{ if(isDragging){ isDragging=false; } });
+
+canvas.addEventListener('touchstart', e=>{
+  if(tourActive) return;
+  isDragging=true; autoSpin=false;
+  lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+},{passive:true});
+canvas.addEventListener('touchmove', e=>{
+  if(!isDragging) return;
+  const dx=e.touches[0].clientX-lastX, dy=e.touches[0].clientY-lastY;
+  globeGroup.rotation.y += dx*0.005;
+  globeGroup.rotation.x += dy*0.004;
+  globeGroup.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, globeGroup.rotation.x));
+  lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+},{passive:true});
+canvas.addEventListener('touchend', ()=>{ isDragging=false; },{passive:true});
+
+// ── Animation loop
+let frame=0;
+function animate(){
+  requestAnimationFrame(animate);
+  frame++;
+
+  if(tourActive){
+    // Smooth lerp to target rotation
+    globeGroup.rotation.y += (targetRotY - globeGroup.rotation.y) * 0.04;
+    globeGroup.rotation.x += (targetRotX - globeGroup.rotation.x) * 0.04;
+  } else if(autoSpin){
+    globeGroup.rotation.y += 0.0015;
+  } else if(!isDragging){
+    // Inertia
+    velX *= 0.95; velY *= 0.95;
+    globeGroup.rotation.y += velX * 0.001;
+    if(Math.abs(velX) < 0.05 && Math.abs(velY) < 0.05) {
+      autoSpin = true;
+    }
+  }
+
+  // Pulse markers
+  const pulse = 0.9 + 0.12*Math.sin(frame*0.05);
+  Object.values(markerMeshes).forEach(m=>{
+    m.outer.scale.x = m.outer.scale.y = m.outer.scale.z =
+      (m.inner.material.color.getHex() === 0xe8b84b ? 1.8 : 1.0) * pulse;
+  });
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── Rotate globe to face country
+function rotateTo(lat, lng){
+  targetRotY = -(lng+90)*Math.PI/180;
+  targetRotX = lat*Math.PI/180;
+}
+
+// ═══════════════════════════════════════════════════════
+// UI LOGIC
+// ═══════════════════════════════════════════════════════
+const searchEl = document.getElementById('search');
+const suggestEl = document.getElementById('suggestions');
+const visitedList = document.getElementById('visited-list');
+const visitedEmpty = document.getElementById('visited-empty');
+
+function renderSuggestions(q){
+  if(!q){ suggestEl.style.display='none'; return; }
+  const ql = q.toLowerCase();
+  const matches = COUNTRIES.filter(c=>c.name.toLowerCase().includes(ql)).slice(0,8);
+  if(!matches.length){ suggestEl.style.display='none'; return; }
+  suggestEl.innerHTML = matches.map(c=>`
+    <div class="suggestion-item" data-name="${c.name}">
+      <span class="s-emoji">${c.emoji}</span>
+      <span class="s-name">${c.name}</span>
+      <span class="s-cont">${c.cont}</span>
+      ${visited.has(c.name)?'<span class="s-check">✓</span>':''}
+    </div>
+  `).join('');
+  suggestEl.style.display='block';
+  suggestEl.querySelectorAll('.suggestion-item').forEach(el=>{
+    el.addEventListener('mousedown', e=>{
+      e.preventDefault();
+      const name = el.dataset.name;
+      if(!visited.has(name)) addCountry(name);
+      searchEl.value='';
+      suggestEl.style.display='none';
+    });
+  });
+}
+
+searchEl.addEventListener('input', ()=>renderSuggestions(searchEl.value.trim()));
+searchEl.addEventListener('blur', ()=>setTimeout(()=>suggestEl.style.display='none',150));
+searchEl.addEventListener('focus', ()=>renderSuggestions(searchEl.value.trim()));
+
+function addCountry(name){
+  if(visited.has(name)) return;
+  visited.add(name);
+  addMarker(name);
+  renderVisited();
+  updateStats();
+  updateURL();
+  document.getElementById('tour-btn').disabled = visited.size === 0;
+}
+
+function removeCountry(name){
+  visited.delete(name);
+  removeMarker(name);
+  renderVisited();
+  updateStats();
+  updateURL();
+  document.getElementById('tour-btn').disabled = visited.size === 0;
+}
+
+function renderVisited(){
+  if(visited.size === 0){
+    visitedList.innerHTML = '';
+    visitedEmpty.style.display='block';
+    return;
+  }
+  visitedEmpty.style.display='none';
+  const sorted = [...visited].sort();
+  visitedList.innerHTML = sorted.map(name=>{
+    const c = countryMap[name];
+    if(!c) return '';
+    return `<div class="visited-chip" data-name="${name}">
+      <span class="vc-emoji">${c.emoji}</span>
+      <span class="vc-name">${c.name}</span>
+      <span class="vc-cont">${c.cont}</span>
+      <button class="vc-remove" onclick="removeCountry('${name.replace(/'/g,"\\'")}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  const count = visited.size;
+  const pct = (count/TOTAL*100).toFixed(1);
+  document.getElementById('stat-count').textContent = count;
+  document.getElementById('stat-pct').textContent = `${pct}% of the world`;
+  document.getElementById('stat-bar-fill').style.width = `${count/TOTAL*100}%`;
+
+  // Rank
+  const rank = RANKS.find(r=>count>=r.min && count<=r.max) || RANKS[RANKS.length-1];
+  const rb = document.getElementById('rank-badge');
+  if(count>0){
+    rb.style.display='flex';
+    rb.querySelector('.rb-icon').textContent = rank.icon;
+    rb.querySelector('.rb-title').textContent = rank.title;
+    rb.querySelector('.rb-sub').textContent = rank.sub;
+  } else {
+    rb.style.display='none';
+  }
+
+  // Continent breakdown
+  const contCounts = {Europe:0,Asia:0,Africa:0,Americas:0,Oceania:0};
+  visited.forEach(n=>{ const c=countryMap[n]; if(c) contCounts[c.cont]=(contCounts[c.cont]||0)+1; });
+  const contEl = document.getElementById('continent-stats');
+  contEl.innerHTML = Object.entries(CONTINENT_TOTALS).map(([cont,total])=>{
+    const n = contCounts[cont]||0;
+    const pct = n/total*100;
+    const color = CONTINENT_COLORS[cont];
+    return `<div class="cont-row">
+      <span class="cont-name">${cont.substring(0,3)}</span>
+      <div class="cont-bar-wrap"><div class="cont-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="cont-nums">${n}/${total}</span>
+    </div>`;
+  }).join('');
+
+  // Panel subtitle
+  const panel_sub = document.getElementById('panel-sub');
+  if(count > 0) panel_sub.textContent = `${count} ${count===1?'country':'countries'} explored`;
+  else panel_sub.textContent = 'Add every country you\'ve set foot in';
+}
+
+// ═══════════════════════════════════════════════════════
+// TOUR MODE
+// ═══════════════════════════════════════════════════════
+let tourList = [];
+let tourIdx = 0;
+let tourFactIdx = 0;
+let tourTimer = null;
+let tourPaused = false;
+const TOUR_INTERVAL = 7000; // 7s per country
+let prevActiveCountry = null;
+
+document.getElementById('tour-btn').addEventListener('click', startTour);
+document.getElementById('tour-stop').addEventListener('click', stopTour);
+document.getElementById('tour-next').addEventListener('click', ()=>{ tourIdx=(tourIdx+1)%tourList.length; showTourCountry(); });
+document.getElementById('tour-prev').addEventListener('click', ()=>{ tourIdx=(tourIdx-1+tourList.length)%tourList.length; showTourCountry(); });
+document.getElementById('tour-pause-play').addEventListener('click', toggleTourPause);
+
+function startTour(){
+  if(visited.size===0) return;
+  tourList = [...visited].sort((a,b)=>{
+    const ca=countryMap[a], cb=countryMap[b];
+    const contOrder=['Europe','Asia','Africa','Americas','Oceania'];
+    return contOrder.indexOf(ca?.cont)-contOrder.indexOf(cb?.cont);
+  });
+  tourIdx=0; tourPaused=false;
+  tourActive=true;
+  autoSpin=false;
+  document.getElementById('tour-overlay').className='active';
+  document.getElementById('tour-pause-play').textContent='⏸ Pause';
+  showTourCountry();
+}
+
+function stopTour(){
+  clearTimeout(tourTimer);
+  tourActive=false;
+  autoSpin=true;
+  document.getElementById('tour-overlay').className='hidden';
+  if(prevActiveCountry){ setMarkerActive(prevActiveCountry, false); prevActiveCountry=null; }
+  document.getElementById('tour-card').classList.remove('visible');
+}
+
+function toggleTourPause(){
+  tourPaused = !tourPaused;
+  document.getElementById('tour-pause-play').textContent = tourPaused ? '▶ Resume' : '⏸ Pause';
+  if(!tourPaused){ scheduleTourNext(); }
+  else { clearTimeout(tourTimer); }
+}
+
+function showTourCountry(){
+  clearTimeout(tourTimer);
+  const name = tourList[tourIdx];
+  const c = countryMap[name];
+  if(!c) return;
+
+  // Deactivate previous
+  if(prevActiveCountry && prevActiveCountry!==name){
+    setMarkerActive(prevActiveCountry, false);
+  }
+  setMarkerActive(name, true);
+  prevActiveCountry = name;
+
+  // Rotate globe
+  autoSpin=false;
+  rotateTo(c.lat, c.lng);
+
+  // Fact data
+  const facts = FACTS[name] || [
+    {emoji:c.emoji, headline:`Welcome to ${name}`, detail:`${name} is located in ${c.cont}. ${visited.size} countries visited — keep exploring!`}
+  ];
+  tourFactIdx = 0;
+
+  // Update overlay
+  document.getElementById('tour-emoji').textContent = c.emoji;
+  document.getElementById('tour-country-name').textContent = name;
+  document.getElementById('tour-continent-badge').textContent = `${c.cont}`;
+  document.getElementById('tour-top-name').textContent = name;
+  document.getElementById('tour-top-cont').textContent = c.cont;
+  document.getElementById('tour-counter').textContent = `${tourIdx+1} / ${tourList.length}`;
+
+  // Progress bar
+  document.getElementById('tour-progress-bar').style.width = `${(tourIdx+1)/tourList.length*100}%`;
+
+  renderTourFact(facts);
+  renderFactDots(facts.length);
+
+  // Show card
+  setTimeout(()=>document.getElementById('tour-card').classList.add('visible'), 50);
+
+  if(!tourPaused) scheduleTourNext();
+}
+
+function renderTourFact(facts){
+  const f = facts[tourFactIdx];
+  document.getElementById('tour-fact-emoji').textContent = f.emoji;
+  document.getElementById('tour-fact-headline').textContent = f.headline;
+  document.getElementById('tour-fact-detail').textContent = f.detail;
+  renderFactDots(facts.length);
+}
+
+function renderFactDots(total){
+  document.getElementById('tour-fact-dots').innerHTML = Array.from({length:total},(_,i)=>
+    `<div class="fact-dot${i===tourFactIdx?' active':''}"></div>`
+  ).join('');
+}
+
+function scheduleTourNext(){
+  clearTimeout(tourTimer);
+  tourTimer = setTimeout(()=>{
+    if(!tourPaused){
+      const facts = FACTS[tourList[tourIdx]];
+      if(facts && tourFactIdx < facts.length-1){
+        tourFactIdx++;
+        renderTourFact(facts);
+        scheduleTourNext();
+      } else {
+        tourIdx = (tourIdx+1)%tourList.length;
+        if(tourIdx===0 && tourList.length>1){
+          // Tour complete — stop or loop
+          stopTour();
+          return;
+        }
+        showTourCountry();
+      }
+    }
+  }, TOUR_INTERVAL);
+}
+
+// ═══════════════════════════════════════════════════════
+// SHARE URL
+// ═══════════════════════════════════════════════════════
+function updateURL(){
+  const codes = [...visited].map(n=>countryMap[n]?.code).filter(Boolean).join(',');
+  const url = new URL(window.location.href);
+  if(codes) url.searchParams.set('v',codes);
+  else url.searchParams.delete('v');
+  history.replaceState(null,'',url.toString());
+}
+
+document.getElementById('share-btn').addEventListener('click', ()=>{
+  const url = window.location.href;
+  navigator.clipboard?.writeText(url).then(()=>{
+    const t = document.getElementById('copy-toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2400);
+  });
+});
+
+// ── Load from URL
+function loadFromURL(){
+  const params = new URLSearchParams(location.search);
+  const v = params.get('v');
+  if(!v) return;
+  const codes = v.split(',');
+  const codeToName = {};
+  COUNTRIES.forEach(c=>codeToName[c.code]=c.name);
+  codes.forEach(code=>{
+    const name = codeToName[code];
+    if(name) addCountry(name);
+  });
+}
+loadFromURL();
+
+</script>
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-PWS2YWY13L');
+</script>
+</body>
+</html>
