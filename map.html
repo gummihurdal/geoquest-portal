@@ -2152,11 +2152,12 @@ svg.call(zoom).on('dblclick.zoom', null);
 let worldTopo = null;
 
 // Load TopoJSON
-fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
   .then(r => r.json())
   .then(world => {
     worldTopo = world;
     buildMap(world);
+    renderTinyIslandDots();
     renderAccordion();
   });
 
@@ -2308,6 +2309,76 @@ resize();
 new ResizeObserver(resize).observe(mapWrap);
 
 // Tour state (replaces Three.js tour vars)
+
+// Tiny island nations with no TopoJSON shape — render as dot markers
+const TINY_ISLAND_CODES = new Set(['AG', 'BB', 'DM', 'GD', 'KN', 'LC', 'VC', 'TT', 'MV', 'MU', 'SC', 'KI', 'NR', 'PW', 'TV', 'WS', 'TO', 'FJ', 'MH', 'FM', 'VU']);
+
+function renderTinyIslandDots() {
+  // Remove existing dots
+  mapG.selectAll('.tiny-dot').remove();
+
+  COUNTRIES.forEach(c => {
+    if(!TINY_ISLAND_CODES.has(c.code)) return;
+    const [px, py] = projection([c.lng, c.lat]);
+    if(!px || !py) return;
+    const isVis = visited.has(c.name);
+    const k = d3.zoomTransform(svg.node()).k;
+
+    const g2 = mapG.insert('g', '#pin-layer')
+      .attr('class', 'tiny-dot')
+      .attr('data-code', c.code)
+      .attr('transform', `translate(${px},${py}) scale(${1/k})`)
+      .style('cursor','pointer')
+      .on('click', () => {
+        if(visited.has(c.name)) removeCountry(c.name);
+        else addCountry(c.name);
+        renderAccordion();
+      })
+      .on('mouseenter', ev => {
+        tip.innerHTML = `${c.emoji} <strong style="color:#dde5f4">${c.name}</strong>${visited.has(c.name) ? ' <span style="color:#00d4c8;margin-left:6px">✓ visited</span>' : ''}`;
+        tip.style.opacity = '1';
+      })
+      .on('mousemove', ev => { tip.style.left=(ev.clientX+16)+'px'; tip.style.top=(ev.clientY-10)+'px'; })
+      .on('mouseleave', () => { tip.style.opacity='0'; });
+
+    // Outer ring
+    g2.append('circle')
+      .attr('r', isVis ? 6 : 4)
+      .attr('fill', isVis ? '#00897b' : '#1a3a5c')
+      .attr('stroke', isVis ? '#00d4c8' : '#2a4a6c')
+      .attr('stroke-width', 1.5);
+    // Label on hover
+    g2.append('text')
+      .attr('text-anchor','middle').attr('y', -8)
+      .attr('font-size','10px').attr('fill','rgba(200,220,240,0.7)')
+      .attr('pointer-events','none')
+      .text(c.emoji);
+  });
+}
+
+function updateTinyDot(name) {
+  const c = countryMap[name];
+  if(!c || !TINY_ISLAND_CODES.has(c.code)) return;
+  const isVis = visited.has(name);
+  mapG.selectAll(`.tiny-dot[data-code="${c.code}"]`).select('circle')
+    .transition().duration(300)
+    .attr('r', isVis ? 6 : 4)
+    .attr('fill', isVis ? '#00897b' : '#1a3a5c')
+    .attr('stroke', isVis ? '#00d4c8' : '#2a4a6c');
+}
+
+// Re-position tiny dots on zoom
+zoom.on('zoom.tiny', ev => {
+  const k = ev.transform.k;
+  mapG.selectAll('.tiny-dot').each(function(d, i) {
+    const code = this.dataset.code;
+    const c = COUNTRIES.find(x => x.code === code);
+    if(!c) return;
+    const [px, py] = projection([c.lng, c.lat]);
+    d3.select(this).attr('transform', `translate(${px},${py}) scale(${1/k})`);
+  });
+});
+
 // ═══════════════════════════════════════════════════════
 // UI LOGIC
 // ═══════════════════════════════════════════════════════
@@ -2959,6 +3030,7 @@ const _origUpdateCountryColor = updateCountryColor;
 function updateCountryColor(name){
   if(compareActive){ renderCompareMap(); return; }
   _origUpdateCountryColor(name);
+  updateTinyDot(name);
 }
 
 </script>
