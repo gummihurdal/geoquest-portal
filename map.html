@@ -2189,12 +2189,12 @@ function buildMap(world) {
     .join('path')
       .attr('class','cty-path')
       .attr('d', pathGen)
-      .attr('data-id', d => String(d.id))
+      .attr('data-id', d => String(parseInt(d.id,10)))
       .attr('fill', d => visitedFill(d))
       .attr('stroke','#1a3050')
       .attr('stroke-width','0.4')
       .on('mouseenter', function(ev, d){
-        const a2 = NUM_TO_A2[String(d.id)];
+        const a2 = NUM_TO_A2[String(parseInt(d.id,10))];
         const c = a2 ? COUNTRIES.find(x => x.code === a2) : null;
         if(!c) return;
         const vis = visited.has(c.name);
@@ -2211,7 +2211,7 @@ function buildMap(world) {
         d3.select(this).attr('fill', visitedFill(d));
       })
       .on('click', function(ev, d){
-        const a2 = NUM_TO_A2[String(d.id)];
+        const a2 = NUM_TO_A2[String(parseInt(d.id,10))];
         const c = a2 ? COUNTRIES.find(x => x.code === a2) : null;
         if(!c) return;
         if(visited.has(c.name)) removeCountry(c.name);
@@ -2242,7 +2242,7 @@ function buildMap(world) {
 }
 
 function visitedFill(d) {
-  const a2 = NUM_TO_A2[String(d.id)];
+  const a2 = NUM_TO_A2[String(parseInt(d.id,10))];
   if(!a2) return '#0d1e33';
   const c = COUNTRIES.find(x => x.code === a2);
   if(!c) return '#0d1e33';
@@ -2268,7 +2268,7 @@ function setMarkerActive(name, active) {
   if(!c) return;
   const num = A2_TO_NUM[c.code];
   if(!num) return;
-  landLayer.selectAll(`path[data-id="${num}"]`)
+  landLayer.selectAll(`path[data-id="${String(parseInt(num,10))}"]`)
     .transition().duration(300)
     .attr('fill', active ? '#e8b84b' : '#00897b');
 }
