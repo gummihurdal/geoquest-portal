@@ -60,6 +60,112 @@
     </script>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Google Fonts for auth overlay -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+    <style>
+      /* ── GeoQuest Auth Overlay ── */
+      :root {
+        --gq-bg: #04060e;
+        --gq-panel2: #0b1829;
+        --gq-border: #1a2d47;
+        --gq-teal: #00d4c8;
+        --gq-text: #dde5f4;
+        --gq-muted: #5a6d8a;
+        --gq-muted2: #3a4f6a;
+        --gq-danger: #e05060;
+        --gq-font-display: 'Cormorant Garamond', Georgia, serif;
+        --gq-font-ui: 'DM Sans', system-ui, sans-serif;
+      }
+      #gq-auth-overlay {
+        display: flex;
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(4,6,14,0.88);
+        backdrop-filter: blur(8px);
+        align-items: center; justify-content: center;
+        font-family: var(--gq-font-ui);
+      }
+      #gq-auth-overlay::before {
+        content: '';
+        position: absolute; inset: 0;
+        background:
+          radial-gradient(ellipse 120% 80% at 70% 50%, rgba(0,153,238,0.07) 0%, transparent 60%),
+          radial-gradient(ellipse 80% 120% at 20% 60%, rgba(0,212,200,0.06) 0%, transparent 55%);
+        pointer-events: none;
+      }
+      #gq-auth-overlay.gq-hidden { display: none; }
+      #gq-auth-card {
+        background: var(--gq-panel2);
+        border: 1px solid var(--gq-border);
+        border-radius: 18px;
+        padding: 36px 32px 28px;
+        width: min(400px, 90vw);
+        text-align: center;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,212,200,0.06), inset 0 1px 0 rgba(255,255,255,0.04);
+        color: var(--gq-text);
+        position: relative; z-index: 1;
+      }
+      .gq-auth-globe { font-size: 42px; margin-bottom: 14px; }
+      #gq-auth-card h2 {
+        font-family: var(--gq-font-display);
+        font-size: 28px; font-weight: 600; color: #fff;
+        margin-bottom: 8px;
+      }
+      #gq-auth-card > p {
+        font-size: 13px; color: var(--gq-muted);
+        line-height: 1.55; margin-bottom: 22px;
+      }
+      .gq-auth-features {
+        display: flex; justify-content: center; gap: 20px;
+        margin-bottom: 20px;
+      }
+      .gq-auth-feat {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 12px; color: var(--gq-muted);
+      }
+      .gq-auth-feat span { font-size: 15px; }
+      .gq-auth-tabs { display: flex; gap: 0; margin-bottom: 20px; border-radius: 10px; overflow: hidden; border: 1px solid var(--gq-border); }
+      .gq-auth-tab {
+        flex: 1; padding: 9px; font-size: 13px; font-weight: 600;
+        background: transparent; border: none; color: var(--gq-muted);
+        cursor: pointer; font-family: var(--gq-font-ui); transition: background 0.15s, color 0.15s;
+      }
+      .gq-auth-tab.active { background: rgba(0,212,200,0.12); color: var(--gq-teal); }
+      .gq-auth-input {
+        width: 100%; background: rgba(255,255,255,0.04);
+        border: 1px solid var(--gq-border); border-radius: 10px;
+        padding: 11px 14px; color: var(--gq-text); font-size: 14px;
+        font-family: var(--gq-font-ui); outline: none; margin-bottom: 10px;
+        transition: border-color 0.2s; box-sizing: border-box;
+      }
+      .gq-auth-input:focus { border-color: var(--gq-teal); }
+      .gq-auth-btn-primary {
+        width: 100%; background: linear-gradient(135deg, #00d4c8, #0099ee);
+        color: #030b1a; border: none; border-radius: 10px;
+        padding: 11px; font-size: 14px; font-weight: 700;
+        cursor: pointer; font-family: var(--gq-font-ui); transition: opacity 0.15s;
+        margin-bottom: 10px;
+      }
+      .gq-auth-btn-primary:hover { opacity: 0.85; }
+      .gq-auth-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+      .gq-auth-btn-google {
+        width: 100%; background: rgba(255,255,255,0.06);
+        color: var(--gq-text); border: 1px solid var(--gq-border); border-radius: 10px;
+        padding: 10px; font-size: 13px; font-weight: 500;
+        cursor: pointer; font-family: var(--gq-font-ui); transition: background 0.15s;
+        margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+      }
+      .gq-auth-btn-google:hover { background: rgba(255,255,255,0.1); }
+      .gq-auth-btn-link {
+        background: none; border: none; color: var(--gq-teal);
+        font-size: 12px; cursor: pointer; font-family: var(--gq-font-ui);
+        padding: 0; text-decoration: underline;
+      }
+      .gq-auth-msg { font-size: 12px; min-height: 18px; color: var(--gq-teal); margin-bottom: 4px; text-align: center; margin-top: 8px; }
+      .gq-auth-msg-err { color: var(--gq-danger); }
+      .gq-auth-divider { border: none; border-top: 1px solid var(--gq-border); margin: 14px 0; }
+      .gq-auth-panel { display: none; text-align: left; }
+      .gq-auth-panel.active { display: block; }
+    </style>
     <!-- GeoQuest Configuration — set your Anthropic API key here for Amazing Facts -->
     <script>
       // To enable AI-powered Amazing Facts, add your Anthropic API key below:
@@ -73,6 +179,143 @@
     <link rel="stylesheet" crossorigin href="/assets/index-8MxFZavd.css?v=3">
   </head>
   <body>
+    <!-- ── AUTH OVERLAY ── -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <div id="gq-auth-overlay">
+      <div id="gq-auth-card">
+        <div class="gq-auth-globe">🌍</div>
+        <h2>Welcome to GeoQuest</h2>
+        <p>Sign in to track your scores, climb the leaderboard, and unlock the full world of geography challenges.</p>
+        <div class="gq-auth-features">
+          <div class="gq-auth-feat"><span>🏆</span> Leaderboard</div>
+          <div class="gq-auth-feat"><span>📊</span> Stats</div>
+          <div class="gq-auth-feat"><span>📱</span> Any device</div>
+        </div>
+
+        <!-- Google OAuth -->
+        <button class="gq-auth-btn-google" onclick="gqHandleGoogleAuth()">
+          <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+
+        <div class="gq-auth-divider"></div>
+
+        <!-- Sign in / Sign up tabs -->
+        <div class="gq-auth-tabs">
+          <button class="gq-auth-tab active" id="gq-tab-signin" onclick="gqSwitchTab('signin')">Sign in</button>
+          <button class="gq-auth-tab" id="gq-tab-signup" onclick="gqSwitchTab('signup')">Create account</button>
+        </div>
+
+        <!-- Sign in panel -->
+        <div class="gq-auth-panel active" id="gq-panel-signin">
+          <input type="email" class="gq-auth-input" id="gq-email" placeholder="Email" autocomplete="email">
+          <input type="password" class="gq-auth-input" id="gq-password" placeholder="Password" autocomplete="current-password">
+          <div style="text-align:right; margin-bottom:10px;">
+            <button class="gq-auth-btn-link" onclick="gqSwitchTab('forgot')">Forgot password?</button>
+          </div>
+          <button class="gq-auth-btn-primary" id="gq-submit-signin" onclick="gqHandleSignIn()">Sign in</button>
+        </div>
+
+        <!-- Sign up panel -->
+        <div class="gq-auth-panel" id="gq-panel-signup">
+          <input type="email" class="gq-auth-input" id="gq-email-signup" placeholder="Email" autocomplete="email">
+          <input type="password" class="gq-auth-input" id="gq-password-signup" placeholder="Password (min 6 chars)" autocomplete="new-password">
+          <button class="gq-auth-btn-primary" id="gq-submit-signup" onclick="gqHandleSignUp()">Create account</button>
+        </div>
+
+        <!-- Forgot password panel -->
+        <div class="gq-auth-panel" id="gq-panel-forgot">
+          <p style="font-size:13px;color:var(--gq-muted);margin-bottom:12px;">Enter your email and we'll send a reset link.</p>
+          <input type="email" class="gq-auth-input" id="gq-email-forgot" placeholder="Email">
+          <button class="gq-auth-btn-primary" onclick="gqHandleForgotPassword()">Send reset link</button>
+          <div style="margin-top:10px;text-align:center;">
+            <button class="gq-auth-btn-link" onclick="gqSwitchTab('signin')">← Back to sign in</button>
+          </div>
+        </div>
+
+        <div id="gq-auth-msg" class="gq-auth-msg"></div>
+        <hr class="gq-auth-divider">
+        <button id="gq-browse-btn" onclick="gqDismissOverlay()" style="background:none;border:1px solid var(--gq-border);border-radius:8px;padding:8px 14px;color:var(--gq-muted);font-size:12px;font-family:var(--gq-font-ui);cursor:pointer;">
+          Continue without account
+        </button>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      var SB_URL = 'https://mjphpctvuxmbjhmcscoj.supabase.co';
+      var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qcGhwY3R2dXhtYmpobWNzY29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMjgzMzQsImV4cCI6MjA4NzgwNDMzNH0.dsmzK7SS4_RSC5wbN6ifhjRlOSbfDZjIcfh2MKkDQIs';
+      var gqSb = supabase.createClient(SB_URL, SB_KEY);
+
+      function gqSetMsg(msg, isErr){
+        var el = document.getElementById('gq-auth-msg');
+        el.textContent = msg;
+        el.className = 'gq-auth-msg' + (isErr ? ' gq-auth-msg-err' : '');
+      }
+
+      window.gqSwitchTab = function(tab){
+        ['signin','signup','forgot'].forEach(function(t){
+          document.getElementById('gq-panel-'+t).classList.toggle('active', t===tab);
+          var btn = document.getElementById('gq-tab-'+t);
+          if(btn) btn.classList.toggle('active', t===tab);
+        });
+        gqSetMsg('');
+      };
+
+      window.gqHandleGoogleAuth = function(){
+        window.location.href = SB_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(window.location.href);
+      };
+
+      window.gqHandleSignIn = async function(){
+        var email = document.getElementById('gq-email').value.trim();
+        var password = document.getElementById('gq-password').value;
+        if(!email||!password){ gqSetMsg('Enter email and password', true); return; }
+        var btn = document.getElementById('gq-submit-signin');
+        btn.disabled=true; btn.textContent='Signing in…';
+        var result = await gqSb.auth.signInWithPassword({email: email, password: password});
+        if(result.error){ gqSetMsg(result.error.message, true); btn.disabled=false; btn.textContent='Sign in'; }
+      };
+
+      window.gqHandleSignUp = async function(){
+        var email = document.getElementById('gq-email-signup').value.trim();
+        var password = document.getElementById('gq-password-signup').value;
+        if(!email||!password){ gqSetMsg('Enter email and password', true); return; }
+        if(password.length<6){ gqSetMsg('Password must be at least 6 characters', true); return; }
+        var btn = document.getElementById('gq-submit-signup');
+        btn.disabled=true; btn.textContent='Creating…';
+        var result = await gqSb.auth.signUp({email: email, password: password});
+        if(result.error){ gqSetMsg(result.error.message, true); btn.disabled=false; btn.textContent='Create account'; }
+        else { gqSetMsg('✅ Account created! Check your email to confirm.', false); btn.textContent='Create account'; btn.disabled=false; }
+      };
+
+      window.gqHandleForgotPassword = async function(){
+        var email = document.getElementById('gq-email-forgot').value.trim();
+        if(!email){ gqSetMsg('Enter your email', true); return; }
+        var result = await gqSb.auth.resetPasswordForEmail(email, {redirectTo: window.location.href});
+        if(result.error){ gqSetMsg(result.error.message, true); }
+        else { gqSetMsg('✉️ Reset link sent — check your email', false); }
+      };
+
+      window.gqDismissOverlay = function(){
+        document.getElementById('gq-auth-overlay').classList.add('gq-hidden');
+      };
+
+      // Hide overlay when authenticated
+      gqSb.auth.onAuthStateChange(function(event, session){
+        if(event === 'SIGNED_IN' && session){
+          document.getElementById('gq-auth-overlay').classList.add('gq-hidden');
+        }
+      });
+
+      // Check session on load
+      gqSb.auth.getSession().then(function(result){
+        if(result.data && result.data.session){
+          document.getElementById('gq-auth-overlay').classList.add('gq-hidden');
+        }
+      });
+    })();
+    </script>
+
     <div id="root"></div>
   <script>
 (function(){
