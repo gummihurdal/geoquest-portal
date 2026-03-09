@@ -231,6 +231,109 @@ html, body {
 }
 .visited-chip .vc-remove:hover { color: var(--danger); background: rgba(224,80,96,0.12); }
 
+/* ── CONTINENT ACCORDION ── */
+#accordion-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 8px;
+}
+#accordion-wrap::-webkit-scrollbar { width: 4px; }
+#accordion-wrap::-webkit-scrollbar-track { background: transparent; }
+#accordion-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.acc-section { border-bottom: 1px solid var(--border); }
+
+.acc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.acc-header:hover { background: rgba(255,255,255,0.03); }
+
+.acc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.acc-cont-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+.acc-count-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(0,212,200,0.12);
+  color: var(--teal);
+  min-width: 28px;
+  text-align: center;
+}
+.acc-count-badge.zero {
+  background: rgba(255,255,255,0.05);
+  color: var(--muted);
+}
+.acc-chevron {
+  font-size: 10px;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+.acc-section.open .acc-chevron { transform: rotate(180deg); }
+
+.acc-body {
+  display: none;
+  padding: 4px 12px 10px;
+}
+.acc-section.open .acc-body { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+
+.acc-country {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: 12.5px;
+  color: var(--muted);
+  user-select: none;
+}
+.acc-country:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.acc-country.visited {
+  color: var(--teal);
+  font-weight: 600;
+}
+.acc-country.visited:hover { background: rgba(0,212,200,0.08); }
+
+.acc-checkbox {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1.5px solid var(--muted2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  transition: all 0.15s;
+}
+.acc-country.visited .acc-checkbox {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #000;
+}
+.acc-emoji { font-size: 14px; line-height: 1; }
+.acc-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Search highlight */
+#search-wrap { position: relative; padding: 10px 14px 8px; }
+
 /* Stats */
 #stats-panel {
   flex-shrink: 0;
@@ -1224,12 +1327,7 @@ html, body {
       <div id="suggestions"></div>
     </div>
 
-    <div id="visited-list">
-      <div id="visited-empty">
-        <span class="empty-icon">🌍</span>
-        Search for a country above<br>and start building your world.
-      </div>
-    </div>
+    <div id="accordion-wrap"></div>
 
     <div id="stats-panel">
       <div class="stat-row">
@@ -1929,7 +2027,6 @@ const mapG = svg.append('g').attr('id','map-g');
 const gratLayer   = mapG.append('g').attr('id','grat-layer');
 const landLayer   = mapG.append('g').attr('id','land-layer');
 const borderLayer = mapG.append('g').attr('id','border-layer');
-const pinLayer    = mapG.append('g').attr('id','pin-layer');
 
 // Tooltip
 const tip = document.createElement('div');
@@ -1952,7 +2049,6 @@ const zoom = d3.zoom()
 svg.call(zoom).on('dblclick.zoom', null);
 
 let worldTopo = null;
-const pinData = {};
 
 // Load TopoJSON
 fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
@@ -1960,6 +2056,7 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
   .then(world => {
     worldTopo = world;
     buildMap(world);
+    renderAccordion();
   });
 
 function buildMap(world) {
@@ -2010,6 +2107,14 @@ function buildMap(world) {
       .on('mouseleave', function(ev, d){
         tip.style.opacity = '0';
         d3.select(this).attr('fill', visitedFill(d));
+      })
+      .on('click', function(ev, d){
+        const a2 = NUM_TO_A2[String(d.id)];
+        const c = a2 ? COUNTRIES.find(x => x.code === a2) : null;
+        if(!c) return;
+        if(visited.has(c.name)) removeCountry(c.name);
+        else addCountry(c.name);
+        renderAccordion();
       });
 
   // Borders
@@ -2020,8 +2125,8 @@ function buildMap(world) {
     .attr('stroke','#1a3050')
     .attr('stroke-width','0.4');
 
-  // Draw pins for already-visited
-  visited.forEach(name => addPin(name));
+  // Color already-visited countries
+  visited.forEach(name => updateCountryColor(name));
 }
 
 function visitedFill(d) {
@@ -2044,77 +2149,16 @@ function updateCountryColor(name) {
     .attr('fill', vis ? '#00897b' : '#0d1e33');
 }
 
-function addPin(name) {
-  const c = countryMap[name];
-  if(!c || pinData[name]) return;
-  pinData[name] = c;
-  const [px, py] = projection([c.lng, c.lat]);
-  const k = d3.zoomTransform(svg.node()).k;
-
-  const g2 = pinLayer.append('g')
-    .attr('class','pin-g')
-    .datum(c)
-    .attr('data-name', name)
-    .attr('transform', `translate(${px},${py}) scale(${1/k})`)
-    .style('cursor','pointer')
-    .on('mouseenter', ev => {
-      tip.innerHTML = `${c.emoji} <strong style="color:#dde5f4">${c.name}</strong> <span style="color:#00d4c8;margin-left:6px">✓ visited</span>`;
-      tip.style.opacity='1';
-    })
-    .on('mousemove', ev => {
-      tip.style.left=(ev.clientX+16)+'px';
-      tip.style.top=(ev.clientY-10)+'px';
-    })
-    .on('mouseleave', ()=>{ tip.style.opacity='0'; });
-
-  // Pulse ring
-  g2.append('circle').attr('class','pin-ring')
-    .attr('r',10).attr('fill','rgba(0,212,200,0.12)')
-    .attr('stroke','rgba(0,212,200,0.7)').attr('stroke-width','1.2');
-  // Dot
-  g2.append('circle').attr('class','pin-dot')
-    .attr('r',4.5).attr('fill','#00d4c8')
-    .attr('stroke','#fff').attr('stroke-width','1.2');
-  // Flag emoji
-  g2.append('text')
-    .attr('text-anchor','middle').attr('y',-14)
-    .attr('font-size','12px').attr('pointer-events','none')
-    .text(c.emoji);
-
-  g2.attr('opacity',0).transition().duration(500).attr('opacity',1);
-  pulsePinRing(g2, name);
-}
-
-function pulsePinRing(g2, name) {
-  const ring = g2.select('.pin-ring');
-  (function pulse(){
-    if(!pinData[name]) return;
-    ring.transition().duration(1400).ease(d3.easeSinInOut)
-      .attr('r',14).attr('stroke-width','0.6').attr('fill','rgba(0,212,200,0.03)')
-      .transition().duration(1400).ease(d3.easeSinInOut)
-      .attr('r',10).attr('stroke-width','1.2').attr('fill','rgba(0,212,200,0.12)')
-      .on('end', pulse);
-  })();
-}
-
-function removePin(name) {
-  delete pinData[name];
-  pinLayer.selectAll(`.pin-g[data-name="${CSS.escape(name)}"]`)
-    .transition().duration(300).attr('opacity',0).remove();
-}
-
-// Highlight pin for tour
+// setMarkerActive — highlight country fill for tour
 function setMarkerActive(name, active) {
-  pinLayer.selectAll(`.pin-g[data-name="${CSS.escape(name)}"]`)
-    .select('.pin-dot')
+  if(!worldTopo) return;
+  const c = countryMap[name];
+  if(!c) return;
+  const num = A2_TO_NUM[c.code];
+  if(!num) return;
+  landLayer.selectAll(`path[data-id="${num}"]`)
     .transition().duration(300)
-    .attr('fill', active ? '#e8b84b' : '#00d4c8')
-    .attr('r', active ? 7 : 4.5);
-  pinLayer.selectAll(`.pin-g[data-name="${CSS.escape(name)}"]`)
-    .select('.pin-ring')
-    .transition().duration(300)
-    .attr('stroke', active ? 'rgba(232,184,75,0.9)' : 'rgba(0,212,200,0.7)')
-    .attr('fill', active ? 'rgba(232,184,75,0.15)' : 'rgba(0,212,200,0.12)');
+    .attr('fill', active ? '#e8b84b' : '#00897b');
 }
 
 // Pan + zoom to a country (used by tour)
@@ -2158,9 +2202,6 @@ new ResizeObserver(resize).observe(mapWrap);
 // ═══════════════════════════════════════════════════════
 const searchEl = document.getElementById('search');
 const suggestEl = document.getElementById('suggestions');
-const visitedList = document.getElementById('visited-list');
-const visitedEmpty = document.getElementById('visited-empty');
-
 function renderSuggestions(q){
   if(!q){ suggestEl.style.display='none'; return; }
   const ql = q.toLowerCase();
@@ -2186,16 +2227,20 @@ function renderSuggestions(q){
   });
 }
 
-searchEl.addEventListener('input', ()=>renderSuggestions(searchEl.value.trim()));
+searchEl.addEventListener('input', ()=>{
+  const q = searchEl.value.trim();
+  renderAccordion(q);
+  // Also keep dropdown for quick-add
+  if(q) renderSuggestions(q); else suggestEl.style.display='none';
+});
 searchEl.addEventListener('blur', ()=>setTimeout(()=>suggestEl.style.display='none',150));
-searchEl.addEventListener('focus', ()=>renderSuggestions(searchEl.value.trim()));
+searchEl.addEventListener('focus', ()=>{ renderAccordion(searchEl.value.trim()); });
 
 function addCountry(name){
   if(visited.has(name)) return;
   visited.add(name);
-  addPin(name);
   updateCountryColor(name);
-  renderVisited();
+  renderAccordion(document.getElementById('search')?.value?.trim());
   updateStats();
   updateMobCount();
   updateURL();
@@ -2205,9 +2250,8 @@ function addCountry(name){
 
 function removeCountry(name){
   visited.delete(name);
-  removePin(name);
   updateCountryColor(name);
-  renderVisited();
+  renderAccordion(document.getElementById('search')?.value?.trim());
   updateStats();
   updateMobCount();
   updateURL();
@@ -2215,25 +2259,53 @@ function removeCountry(name){
   document.getElementById('tour-btn').disabled = visited.size === 0;
 }
 
-function renderVisited(){
-  if(visited.size === 0){
-    visitedList.innerHTML = '';
-    visitedEmpty.style.display='block';
-    return;
-  }
-  visitedEmpty.style.display='none';
-  const sorted = [...visited].sort();
-  visitedList.innerHTML = sorted.map(name=>{
-    const c = countryMap[name];
-    if(!c) return '';
-    return `<div class="visited-chip" data-name="${name}">
-      <span class="vc-emoji">${c.emoji}</span>
-      <span class="vc-name">${c.name}</span>
-      <span class="vc-cont">${c.cont}</span>
-      <button class="vc-remove" onclick="removeCountry('${name.replace(/'/g,"\\'")}')">×</button>
+const CONT_ORDER = ['Europe','Asia','Africa','Americas','Oceania'];
+const CONT_EMOJI  = {Europe:'🌍',Asia:'🌏',Africa:'🌍',Americas:'🌎',Oceania:'🌊'};
+const accOpen = {Europe:true,Asia:false,Africa:false,Americas:false,Oceania:false};
+
+function renderAccordion(filterQ){
+  const wrap = document.getElementById('accordion-wrap');
+  if(!wrap) return;
+  const q = (filterQ||'').toLowerCase().trim();
+  wrap.innerHTML = CONT_ORDER.map(cont => {
+    let countries = COUNTRIES.filter(c => c.cont === cont);
+    if(q) countries = countries.filter(c => c.name.toLowerCase().includes(q));
+    if(!countries.length) return '';
+    const vis = countries.filter(c => visited.has(c.name)).length;
+    const isOpen = accOpen[cont] || !!q;
+    return `<div class="acc-section${isOpen?' open':''}" data-cont="${cont}">
+      <div class="acc-header" onclick="toggleAcc('${cont}')">
+        <div class="acc-header-left">
+          <span class="acc-cont-name">${CONT_EMOJI[cont]} ${cont}</span>
+          <span class="acc-count-badge${vis===0?' zero':''}">${vis}/${countries.length}</span>
+        </div>
+        <span class="acc-chevron">▼</span>
+      </div>
+      <div class="acc-body">
+        ${countries.sort((a,b)=>a.name.localeCompare(b.name)).map(c => {
+          const isVis = visited.has(c.name);
+          return `<div class="acc-country${isVis?' visited':''}" onclick="toggleCountry('${c.name.replace(/'/g,"\\'")}')">
+            <div class="acc-checkbox">${isVis?'✓':''}</div>
+            <span class="acc-emoji">${c.emoji}</span>
+            <span class="acc-name">${c.name}</span>
+          </div>`;
+        }).join('')}
+      </div>
     </div>`;
   }).join('');
 }
+
+function toggleAcc(cont){
+  accOpen[cont] = !accOpen[cont];
+  renderAccordion(document.getElementById('search')?.value?.trim());
+}
+
+function toggleCountry(name){
+  if(visited.has(name)) removeCountry(name);
+  else addCountry(name);
+}
+
+function renderVisited(){ renderAccordion(); }
 
 function updateStats(){
   const count = visited.size;
@@ -2470,14 +2542,15 @@ function codeMapBuild(){
 }
 function loadCodes(codesStr){
   visited.clear();
-  Object.keys(pinData).forEach(k => removePin(k));
+  // Reset all country fills
+  landLayer.selectAll('.cty-path').attr('fill', '#0d1e33');
   if(!codesStr) return;
   const codeToName = codeMapBuild();
   codesStr.split(',').forEach(code=>{
     const name = codeToName[code.trim()];
-    if(name){ visited.add(name); addPin(name); updateCountryColor(name); }
+    if(name){ visited.add(name); updateCountryColor(name); }
   });
-  renderVisited();
+  renderAccordion();
   updateStats();
   updateMobCount();
   document.getElementById('tour-btn').disabled = visited.size===0;
