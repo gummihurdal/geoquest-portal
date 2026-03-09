@@ -2071,9 +2071,46 @@ function animate(){
   frame++;
 
   if(tourActive){
-    // Smooth lerp to target rotation
-    globeGroup.rotation.y += (targetRotY - globeGroup.rotation.y) * 0.04;
-    globeGroup.rotation.x += (targetRotX - globeGroup.rotation.x) * 0.04;
+    if(tourSpinning){
+      // Cinematic arc spin toward target
+      const dy = targetRotY - globeGroup.rotation.y;
+      const dx = targetRotX - globeGroup.rotation.x;
+      globeGroup.rotation.y += dy * 0.018;
+      globeGroup.rotation.x += dx * 0.025;
+      // All visited markers sweep gold during travel
+      const tp = 0.8 + 0.4*Math.sin(frame*0.12);
+      Object.entries(markerMeshes).forEach(([n,m])=>{
+        if(n !== tourList[tourIdx]){
+          m.inner.material.color.setHex(0xe8b84b);
+          m.outer.material.color.setHex(0xe8b84b);
+          m.outer.material.opacity = 0.2 + 0.2*tp;
+          m.inner.scale.setScalar(tp);
+          m.outer.scale.setScalar(tp * 1.5);
+        }
+      });
+      if(Math.abs(dy)<0.02 && Math.abs(dx)<0.02){
+        tourSpinning = false;
+        globeGroup.rotation.y = targetRotY;
+        globeGroup.rotation.x = targetRotX;
+        // Restore non-active to teal
+        Object.entries(markerMeshes).forEach(([n,m])=>{
+          if(n !== tourList[tourIdx]){
+            m.inner.material.color.setHex(0x00d4c8);
+            m.outer.material.color.setHex(0x00d4c8);
+            m.outer.material.opacity = 0.3;
+            m.inner.scale.setScalar(1.0);
+            m.outer.scale.setScalar(1.0);
+          }
+        });
+      }
+    } else {
+      // Arrived: active marker big gold pulse
+      const pulse = 0.9 + 0.12*Math.sin(frame*0.05);
+      Object.values(markerMeshes).forEach(m=>{
+        m.outer.scale.x = m.outer.scale.y = m.outer.scale.z =
+          (m.inner.material.color.getHex() === 0xe8b84b ? 1.8 : 1.0) * pulse;
+      });
+    }
   } else if(autoSpin){
     globeGroup.rotation.y += 0.0015;
   } else if(!isDragging){
@@ -2270,6 +2307,7 @@ canvas.addEventListener('touchstart', ()=>{
 // ═══════════════════════════════════════════════════════
 let tourList = [];
 let tourIdx = 0;
+let tourSpinning = false;
 let tourFactIdx = 0;
 let tourTimer = null;
 let tourPaused = false;
@@ -2300,6 +2338,7 @@ function startTour(){
 function stopTour(){
   clearTimeout(tourTimer);
   tourActive=false;
+  tourSpinning=false;
   autoSpin=true;
   document.getElementById('tour-overlay').className='hidden';
   if(prevActiveCountry){ setMarkerActive(prevActiveCountry, false); prevActiveCountry=null; }
@@ -2326,8 +2365,9 @@ function showTourCountry(){
   setMarkerActive(name, true);
   prevActiveCountry = name;
 
-  // Rotate globe
+  // Rotate globe with cinematic spin
   autoSpin=false;
+  tourSpinning=true;
   rotateTo(c.lat, c.lng);
 
   // Fact data
