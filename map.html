@@ -2260,7 +2260,7 @@ async function saveToDb(){
       user_id: currentUser.id,
       country_codes: codes,
       updated_at: new Date().toISOString()
-    });
+    }, { onConflict: 'user_id' });
   }, 800);
 }
 
