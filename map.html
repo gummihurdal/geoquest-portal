@@ -606,22 +606,156 @@ html, body {
 }
 #copy-toast.show { transform: translateX(-50%) translateY(0); }
 
-/* Mobile */
+/* ── MOBILE HANDLE (hidden on desktop) ── */
+#mob-handle { display: none; }
+
+/* ── MOBILE BOTTOM SHEET ── */
 @media (max-width: 700px) {
-  #app { flex-direction: column; }
-  .topnav-links { overflow-x: auto; justify-content: flex-start; gap: 2px; scrollbar-width: none; }
-  .topnav-links::-webkit-scrollbar { display: none; }
-  .topnav-link { padding: 5px 9px; font-size: 12px; white-space: nowrap; }
+  /* Nav: strip the link bar, keep logo + auth */
+  .topnav-links { display: none; }
+  #topnav { padding: 0 14px; }
+  #topnav-logo span { font-size: 16px; }
+
+  /* App layout: globe full-screen */
+  #app {
+    flex-direction: column;
+    position: relative;
+  }
+  #globe-wrap {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Panel = bottom sheet */
   #panel {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
     width: 100%;
     max-width: 100%;
-    height: 45vh;
+    min-width: unset;
+    height: 78vh;
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    border-radius: 22px 22px 0 0;
+    transform: translateY(calc(100% - 72px));
+    transition: transform 0.42s cubic-bezier(0.4,0,0.2,1);
+    z-index: 100;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+    overflow: hidden;
   }
-  #globe-wrap { height: 55vh; }
-  #tour-card { width: calc(100vw - 24px); bottom: 12px; right: 12px; }
-  #tour-toplabel h2 { font-size: 32px; }
+  #panel.mob-open {
+    transform: translateY(0);
+  }
+
+  /* Mobile handle bar */
+  #mob-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mob-grip {
+    width: 38px; height: 4px;
+    background: var(--muted2);
+    border-radius: 2px;
+    margin-bottom: 10px;
+  }
+  .mob-handle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 18px 10px;
+  }
+  .mob-stat-left {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+  .mob-count-num {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--teal);
+    line-height: 1;
+  }
+  .mob-count-label {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .mob-open-hint {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  #mob-open-arrow {
+    transition: transform 0.35s;
+    font-size: 14px;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+  #panel.mob-open #mob-open-arrow { transform: rotate(180deg); }
+
+  /* Hero: always collapsed on mobile */
+  #hero-banner { max-height: 0 !important; opacity: 0 !important; pointer-events: none !important; }
+  #hero-show-btn { display: none !important; }
+
+  /* Panel header: compact */
+  #panel-header { padding: 8px 18px 10px; }
+  #panel-header .back-link { display: none; }
+  #panel-header h1 { font-size: 20px; margin-bottom: 2px; }
+
+  /* Search: bigger tap target, prevent iOS zoom */
+  #search-wrap { padding: 8px 14px 8px; }
+  #search { font-size: 16px !important; padding: 13px 14px 13px 40px; border-radius: 12px; }
+
+  /* Suggestions: ensure above everything */
+  #suggestions { z-index: 200; }
+
+  /* Visited chips: larger touch targets */
+  .visited-chip { padding: 11px 10px; }
+  .vc-remove { min-width: 36px; min-height: 36px; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+  .vc-name { font-size: 14px; }
+  .vc-emoji { font-size: 20px; }
+
+  /* Stats: more compact */
+  #stats-panel { padding: 10px 16px; }
+  #stat-count { font-size: 32px; }
+  #continent-stats { gap: 3px; }
+
+  /* Panel actions: side-by-side */
+  #panel-actions { flex-direction: row; gap: 8px; padding: 10px 14px 14px; }
+  #tour-btn { flex: 2; font-size: 13px; padding: 11px 8px; }
+  #share-btn { flex: 1; font-size: 12px; padding: 10px 6px; }
+
+  /* Tour card: full-width above handle */
+  #tour-card {
+    width: calc(100vw - 20px);
+    bottom: 82px;
+    right: 10px;
+    left: 10px;
+    border-radius: 16px;
+  }
+  #tour-toplabel { top: 16px; }
+  #tour-toplabel h2 { font-size: 28px; }
+  #tour-country-info { padding: 14px 18px 12px; gap: 10px; }
+  #tour-emoji { font-size: 32px; }
+  #tour-country-name { font-size: 22px; }
+  #tour-fact-wrap { padding: 12px 18px 10px; min-height: 90px; }
+  #tour-fact-headline { font-size: 14px; }
+  #tour-controls { padding: 10px 18px 14px; }
+  #tour-prev, #tour-next { width: 34px; height: 34px; font-size: 18px; }
+
+  /* Toast: higher so it clears the handle */
+  #copy-toast { bottom: 90px; }
 }
 
 /* ── NAV BAR ── */
@@ -1014,6 +1148,17 @@ html, body {
 
   <!-- ── PANEL ── -->
   <aside id="panel">
+    <!-- Mobile drag handle (hidden on desktop) -->
+    <div id="mob-handle" onclick="toggleMobilePanel()">
+      <div class="mob-grip"></div>
+      <div class="mob-handle-row">
+        <div class="mob-stat-left">
+          <span class="mob-count-num" id="mob-count">0</span>
+          <span class="mob-count-label">/ 195 countries</span>
+        </div>
+        <span class="mob-open-hint">My World <span id="mob-open-arrow">▲</span></span>
+      </div>
+    </div>
     <div id="panel-header">
       <a href="https://trivia.azurenexus.com" class="back-link">← GeoQuest</a>
       <h1>My World</h1>
@@ -2001,6 +2146,7 @@ function addCountry(name){
   addMarker(name);
   renderVisited();
   updateStats();
+  updateMobCount();
   updateURL();
   saveToDb();
   document.getElementById('tour-btn').disabled = visited.size === 0;
@@ -2011,6 +2157,7 @@ function removeCountry(name){
   removeMarker(name);
   renderVisited();
   updateStats();
+  updateMobCount();
   updateURL();
   saveToDb();
   document.getElementById('tour-btn').disabled = visited.size === 0;
@@ -2077,7 +2224,49 @@ function updateStats(){
 }
 
 // ═══════════════════════════════════════════════════════
-// TOUR MODE
+// MOBILE BOTTOM SHEET
+// ═══════════════════════════════════════════════════════
+function isMobile(){ return window.innerWidth <= 700; }
+
+function toggleMobilePanel(){
+  if(!isMobile()) return;
+  document.getElementById('panel').classList.toggle('mob-open');
+}
+
+function closeMobilePanel(){
+  if(!isMobile()) return;
+  document.getElementById('panel').classList.remove('mob-open');
+}
+
+// Sync the handle count badge whenever visited changes
+function updateMobCount(){
+  const el = document.getElementById('mob-count');
+  if(el) el.textContent = visited.size;
+}
+
+// Close panel when tapping globe canvas on mobile
+canvas.addEventListener('touchstart', ()=>{
+  if(isMobile()) closeMobilePanel();
+}, {passive:true});
+
+// Touch drag on handle to open/close
+(function(){
+  let startY=0, startOpen=false;
+  const handle = document.getElementById('mob-handle');
+  handle.addEventListener('touchstart', e=>{
+    startY = e.touches[0].clientY;
+    startOpen = document.getElementById('panel').classList.contains('mob-open');
+  }, {passive:true});
+  handle.addEventListener('touchend', e=>{
+    const dy = startY - e.changedTouches[0].clientY;
+    // swipe up >30px → open; swipe down >30px → close; small movement → toggle
+    if(dy > 30) document.getElementById('panel').classList.add('mob-open');
+    else if(dy < -30) document.getElementById('panel').classList.remove('mob-open');
+    // small taps handled by onclick
+  }, {passive:true});
+})();
+
+
 // ═══════════════════════════════════════════════════════
 let tourList = [];
 let tourIdx = 0;
@@ -2243,6 +2432,7 @@ function loadCodes(codesStr){
   });
   renderVisited();
   updateStats();
+  updateMobCount();
   document.getElementById('tour-btn').disabled = visited.size===0;
 }
 
