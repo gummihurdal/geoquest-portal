@@ -2532,19 +2532,7 @@ async function handleSignOut(){
   try { Object.keys(localStorage).filter(k=>k.startsWith('sb-')||k.startsWith('lock:')).forEach(k=>localStorage.removeItem(k)); } catch(e){}
   try { Object.keys(sessionStorage).filter(k=>k.startsWith('sb-')).forEach(k=>sessionStorage.removeItem(k)); } catch(e){}
   sb.auth.signOut().catch(()=>{}); // fire and forget — invalidates server session
-  currentUser = null;
-  // Clear map state
-  visited.clear();
-  try {
-    Object.values(markerMeshes).forEach(m=>{ globeGroup.remove(m.outer); globeGroup.remove(m.inner); });
-    Object.keys(markerMeshes).forEach(k=>delete markerMeshes[k]);
-    renderVisited(); updateStats();
-    document.getElementById('tour-btn').disabled = true;
-  } catch(e){}
-  // Show hard auth gate
-  updateNavAuth(null);
-  document.getElementById('app').style.visibility = 'hidden';
-  showAuthModal(true);
+  window.location.href = 'https://trivia.azurenexus.com';
 }
 
 function updateNavAuth(user){
