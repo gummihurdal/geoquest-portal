@@ -7,7 +7,8 @@
 <meta name="description" content="Track every country you've visited. Watch your globe come alive with a cinematic tour of your travels.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
 // ── HERO DISMISS ──
 function dismissHero(){
@@ -359,11 +360,13 @@ html, body {
   overflow: hidden;
 }
 
-#globe-canvas {
+#world-map {
   width: 100%;
   height: 100%;
   display: block;
+  cursor: grab;
 }
+#world-map:active { cursor: grabbing; }
 
 /* ── TOUR OVERLAY ── */
 #tour-overlay {
@@ -373,12 +376,7 @@ html, body {
   pointer-events: none;
   transition: opacity 0.4s;
 }
-/* Desktop: globe area stays fully interactive during tour */
-@media (min-width: 701px) {
-  #tour-overlay.active {
-    pointer-events: none; /* card itself has pointer-events: auto */
-  }
-}
+
 #tour-overlay.hidden { opacity: 0; pointer-events: none; }
 #tour-overlay.active { opacity: 1; pointer-events: auto; }
 
@@ -390,16 +388,8 @@ html, body {
   backdrop-filter: blur(2px);
 }
 @media (min-width: 701px) {
-  /* On desktop: dim only the left panel, not the globe */
-  #tour-backdrop {
-    right: auto;
-    width: 360px;
-  }
-  /* Tour card sits at bottom-right of globe */
-  #tour-card {
-    right: 40px;
-    bottom: 40px;
-  }
+  /* On desktop: no backdrop dim — flat map stays fully visible during tour */
+  #tour-backdrop { display: none; }
 }
 
 /* Tour card - bottom right cinematic style */
@@ -1265,7 +1255,7 @@ html, body {
 
   <!-- ── GLOBE ── -->
   <main id="globe-wrap">
-    <canvas id="globe-canvas"></canvas>
+    <svg id="world-map"></svg>
   </main>
 
   <!-- ── TOUR OVERLAY ── -->
@@ -1886,278 +1876,283 @@ const countryMap = {};
 COUNTRIES.forEach(c => countryMap[c.name] = c);
 
 // ═══════════════════════════════════════════════════════
-// THREE.JS GLOBE
+// D3 FLAT WORLD MAP
 // ═══════════════════════════════════════════════════════
-const canvas = document.getElementById('globe-canvas');
-const globeWrap = document.getElementById('globe-wrap');
+const mapWrap = document.getElementById('globe-wrap');
+const svg = d3.select('#world-map');
+let mapWidth = mapWrap.clientWidth || 800;
+let mapHeight = mapWrap.clientHeight || 600;
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x04060e);
+// ISO alpha-2 → TopoJSON numeric id
+const A2_TO_NUM = {
+  AF:"4",AL:"8",DZ:"12",AD:"20",AO:"24",AG:"28",AR:"32",AM:"51",AU:"36",AT:"40",
+  AZ:"31",BS:"44",BH:"48",BD:"50",BB:"52",BY:"112",BE:"56",BZ:"84",BJ:"204",BT:"64",
+  BO:"68",BA:"70",BW:"72",BR:"76",BN:"96",BG:"100",BF:"854",BI:"108",CV:"132",KH:"116",
+  CM:"120",CA:"124",CF:"140",TD:"148",CL:"152",CN:"156",CO:"170",KM:"174",CG:"178",
+  CD:"180",CR:"188",CI:"384",HR:"191",CU:"192",CY:"196",CZ:"203",DK:"208",DJ:"262",
+  DM:"212",DO:"214",EC:"218",EG:"818",SV:"222",GQ:"226",ER:"232",EE:"233",SZ:"748",
+  ET:"231",FJ:"242",FI:"246",FR:"250",GA:"266",GM:"270",GE:"268",DE:"276",GH:"288",
+  GR:"300",GD:"308",GT:"320",GN:"324",GW:"624",GY:"328",HT:"332",HN:"340",HU:"348",
+  IS:"352",IN:"356",ID:"360",IR:"364",IQ:"368",IE:"372",IL:"376",IT:"380",JM:"388",
+  JP:"392",JO:"400",KZ:"398",KE:"404",KI:"296",KP:"408",KR:"410",XK:"383",KW:"414",
+  KG:"417",LA:"418",LV:"428",LB:"422",LS:"426",LR:"430",LY:"434",LI:"438",LT:"440",
+  LU:"442",MG:"450",MW:"454",MY:"458",MV:"462",ML:"466",MT:"470",MH:"584",MR:"478",
+  MU:"480",MX:"484",FM:"583",MD:"498",MC:"492",MN:"496",ME:"499",MA:"504",MZ:"508",
+  MM:"104",NA:"516",NR:"520",NP:"524",NL:"528",NZ:"554",NI:"558",NE:"562",NG:"566",
+  NO:"578",OM:"512",PK:"586",PW:"585",PS:"275",PA:"591",PG:"598",PY:"600",PE:"604",
+  PH:"608",PL:"616",PT:"620",QA:"634",RO:"642",RU:"643",RW:"646",KN:"659",LC:"662",
+  VC:"670",WS:"882",SM:"674",SA:"682",SN:"686",RS:"688",SC:"690",SL:"694",SK:"703",
+  SI:"705",SB:"90",SO:"706",ZA:"710",SS:"728",ES:"724",LK:"144",SD:"729",SR:"740",
+  SE:"752",CH:"756",SY:"760",TJ:"762",TZ:"834",TH:"764",TL:"626",TG:"768",TO:"776",
+  TT:"780",TN:"788",TR:"792",TM:"795",TV:"798",UG:"800",UA:"804",AE:"784",GB:"826",
+  US:"840",UY:"858",UZ:"860",VU:"548",VA:"336",VE:"862",VN:"704",YE:"887",ZM:"894",ZW:"716"
+};
+const NUM_TO_A2 = {};
+Object.entries(A2_TO_NUM).forEach(([a2,num]) => NUM_TO_A2[num] = a2);
 
-const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-camera.position.z = 3.0;
+// Projection
+let projection = d3.geoNaturalEarth1()
+  .scale(mapWidth / 6.4)
+  .translate([mapWidth/2, mapHeight/2]);
+let pathGen = d3.geoPath().projection(projection);
 
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// Map layers
+const defs = svg.append('defs');
+// Ocean gradient
+const grad = defs.append('radialGradient').attr('id','ocean-grad');
+grad.append('stop').attr('offset','0%').attr('stop-color','#0a1e38');
+grad.append('stop').attr('offset','100%').attr('stop-color','#04060e');
 
-const globeGroup = new THREE.Group();
-globeGroup.rotation.order = 'YXZ';
-scene.add(globeGroup);
+svg.append('rect').attr('id','ocean-rect').attr('width','100%').attr('height','100%').attr('fill','url(#ocean-grad)');
 
-// Stars
-const starGeo = new THREE.BufferGeometry();
-const starVerts = [];
-for(let i=0;i<3000;i++){
-  const theta = Math.random()*Math.PI*2;
-  const phi = Math.acos(Math.random()*2-1);
-  const r = 40 + Math.random()*20;
-  starVerts.push(
-    r*Math.sin(phi)*Math.cos(theta),
-    r*Math.cos(phi),
-    r*Math.sin(phi)*Math.sin(theta)
-  );
-}
-starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts,3));
-scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff,size:0.06,transparent:true,opacity:0.7})));
+const mapG = svg.append('g').attr('id','map-g');
+const gratLayer   = mapG.append('g').attr('id','grat-layer');
+const landLayer   = mapG.append('g').attr('id','land-layer');
+const borderLayer = mapG.append('g').attr('id','border-layer');
+const pinLayer    = mapG.append('g').attr('id','pin-layer');
 
-// Base sphere with Earth texture
-const loader = new THREE.TextureLoader();
-const earthMat = new THREE.MeshPhongMaterial({
-  color:0x2244aa, specular:0x112244, shininess:18
-});
-const sphere = new THREE.Mesh(new THREE.SphereGeometry(1,64,64), earthMat);
-globeGroup.add(sphere);
+// Tooltip
+const tip = document.createElement('div');
+tip.id = 'map-tip';
+tip.style.cssText = 'position:fixed;background:rgba(7,16,31,0.96);border:1px solid rgba(0,212,200,0.5);border-radius:10px;padding:7px 14px;font-size:13px;color:#dde5f4;pointer-events:none;z-index:600;opacity:0;transition:opacity 0.12s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+document.body.appendChild(tip);
 
-// Load earth texture — fallback to solid colour if blocked
-loader.load(
-  'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
-  (tex)=>{ earthMat.map=tex; earthMat.color.set(0xffffff); earthMat.needsUpdate=true; },
-  undefined,
-  ()=>{ // fallback: try alternate CDN
-    loader.load(
-      'https://cdn.jsdelivr.net/npm/three-globe@2.30.0/example/img/earth-blue-marble.jpg',
-      (tex)=>{ earthMat.map=tex; earthMat.color.set(0xffffff); earthMat.needsUpdate=true; }
-    );
-  }
-);
+// Zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.7, 14])
+  .on('zoom', ev => {
+    mapG.attr('transform', ev.transform);
+    // Keep pins crisp regardless of zoom
+    const k = ev.transform.k;
+    pinLayer.selectAll('.pin-g').each(function(d){
+      const [px, py] = projection([d.lng, d.lat]);
+      d3.select(this).attr('transform', `translate(${px},${py}) scale(${1/k})`);
+    });
+  });
+svg.call(zoom).on('dblclick.zoom', null);
 
-// Subtle specular map for ocean shine
-loader.load(
-  'https://unpkg.com/three-globe/example/img/earth-water.png',
-  (tex)=>{ earthMat.specularMap=tex; earthMat.needsUpdate=true; }
-);
+let worldTopo = null;
+const pinData = {};
 
-// Night lights on dark side
-const nightMat = new THREE.MeshBasicMaterial({transparent:true, opacity:0.6});
-loader.load(
-  'https://unpkg.com/three-globe/example/img/earth-night.jpg',
-  (tex)=>{ nightMat.map=tex; nightMat.needsUpdate=true; }
-);
-const nightSphere = new THREE.Mesh(new THREE.SphereGeometry(1.002,64,64), nightMat);
-globeGroup.add(nightSphere);
-
-// Subtle cloud layer
-const cloudMat = new THREE.MeshBasicMaterial({transparent:true, opacity:0.18});
-loader.load(
-  'https://unpkg.com/three-globe/example/img/earth-clouds.png',
-  (tex)=>{ cloudMat.map=tex; cloudMat.transparent=true; cloudMat.needsUpdate=true; }
-);
-const cloudSphere = new THREE.Mesh(new THREE.SphereGeometry(1.012,64,64), cloudMat);
-scene.add(cloudSphere);
-
-// Slow cloud rotation
-function animateClouds(){ cloudSphere.rotation.y += 0.0001; }
-
-// Atmosphere (outer glow)
-const atmGeo = new THREE.SphereGeometry(1.18,32,32);
-const atmMat = new THREE.MeshBasicMaterial({
-  color:0x1a5fff, transparent:true, opacity:0.07, side:THREE.BackSide
-});
-scene.add(new THREE.Mesh(atmGeo, atmMat));
-
-// Lights
-scene.add(new THREE.AmbientLight(0x334466, 0.7));
-const sun = new THREE.DirectionalLight(0x88aaff, 1.4);
-sun.position.set(5,3,5);
-scene.add(sun);
-
-// ── lat/lng → Vector3
-function llToV3(lat,lng,r=1.02){
-  const phi = (90-lat)*Math.PI/180;
-  const theta = (lng+180)*Math.PI/180;
-  return new THREE.Vector3(
-    -r*Math.sin(phi)*Math.cos(theta),
-    r*Math.cos(phi),
-    r*Math.sin(phi)*Math.sin(theta)
-  );
-}
-
-// Country markers
-const markerMeshes = {};
-function addMarker(name){
-  if(markerMeshes[name]) return;
-  const c = countryMap[name];
-  if(!c) return;
-  const pos = llToV3(c.lat, c.lng);
-  // Outer glow
-  const outer = new THREE.Mesh(
-    new THREE.SphereGeometry(0.032,8,8),
-    new THREE.MeshBasicMaterial({color:0x00d4c8, transparent:true, opacity:0.3})
-  );
-  outer.position.copy(pos);
-  // Inner dot
-  const inner = new THREE.Mesh(
-    new THREE.SphereGeometry(0.018,8,8),
-    new THREE.MeshBasicMaterial({color:0x00d4c8})
-  );
-  inner.position.copy(pos);
-  globeGroup.add(outer);
-  globeGroup.add(inner);
-  markerMeshes[name] = {outer, inner, baseColor:0x00d4c8};
-}
-
-function removeMarker(name){
-  const m = markerMeshes[name];
-  if(!m) return;
-  globeGroup.remove(m.outer);
-  globeGroup.remove(m.inner);
-  delete markerMeshes[name];
-}
-
-function setMarkerActive(name, active){
-  const m = markerMeshes[name];
-  if(!m) return;
-  const c = active ? 0xe8b84b : 0x00d4c8;
-  m.inner.material.color.setHex(c);
-  m.outer.material.color.setHex(c);
-  m.outer.material.opacity = active ? 0.5 : 0.3;
-  m.inner.scale.setScalar(active ? 1.6 : 1.0);
-  m.outer.scale.setScalar(active ? 1.8 : 1.0);
-}
-
-// ── Resize
-function resize(){
-  const w = globeWrap.clientWidth, h = globeWrap.clientHeight;
-  renderer.setSize(w, h);
-  camera.aspect = w/h;
-  camera.updateProjectionMatrix();
-}
-resize();
-new ResizeObserver(resize).observe(globeWrap);
-
-// ── Mouse drag orbit
-let isDragging=false, lastX=0, lastY=0;
-let velX=0, velY=0;
-let autoSpin = true;
-let tourActive = false;
-let targetRotX=0, targetRotY=0;
-
-canvas.addEventListener('mousedown', e=>{
-  if(tourActive) return;
-  isDragging=true; lastX=e.clientX; lastY=e.clientY; velX=velY=0; autoSpin=false;
-});
-window.addEventListener('mousemove', e=>{
-  if(!isDragging) return;
-  const dx=e.clientX-lastX, dy=e.clientY-lastY;
-  globeGroup.rotation.y += dx*0.005;
-  globeGroup.rotation.x += dy*0.004;
-  globeGroup.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, globeGroup.rotation.x));
-  velX=dx; velY=dy;
-  lastX=e.clientX; lastY=e.clientY;
-});
-window.addEventListener('mouseup', ()=>{ if(isDragging){ isDragging=false; } });
-
-canvas.addEventListener('touchstart', e=>{
-  if(tourActive) return;
-  isDragging=true; autoSpin=false;
-  lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
-},{passive:true});
-canvas.addEventListener('touchmove', e=>{
-  if(!isDragging) return;
-  const dx=e.touches[0].clientX-lastX, dy=e.touches[0].clientY-lastY;
-  globeGroup.rotation.y += dx*0.005;
-  globeGroup.rotation.x += dy*0.004;
-  globeGroup.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, globeGroup.rotation.x));
-  lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
-},{passive:true});
-canvas.addEventListener('touchend', ()=>{ isDragging=false; },{passive:true});
-
-// ── Animation loop
-let frame=0;
-function animate(){
-  requestAnimationFrame(animate);
-  frame++;
-
-  if(tourActive){
-    if(tourSpinning){
-      // Cinematic arc spin toward target
-      const dy = targetRotY - globeGroup.rotation.y;
-      const dx = targetRotX - globeGroup.rotation.x;
-      globeGroup.rotation.y += dy * 0.018;
-      globeGroup.rotation.x += dx * 0.025;
-      // All visited markers sweep gold during travel
-      const tp = 0.8 + 0.4*Math.sin(frame*0.12);
-      Object.entries(markerMeshes).forEach(([n,m])=>{
-        if(n !== tourList[tourIdx]){
-          m.inner.material.color.setHex(0xe8b84b);
-          m.outer.material.color.setHex(0xe8b84b);
-          m.outer.material.opacity = 0.2 + 0.2*tp;
-          m.inner.scale.setScalar(tp);
-          m.outer.scale.setScalar(tp * 1.5);
-        }
-      });
-      if(Math.abs(dy)<0.02 && Math.abs(dx)<0.02){
-        tourSpinning = false;
-        globeGroup.rotation.y = targetRotY;
-        globeGroup.rotation.x = targetRotX;
-        // Restore non-active to teal
-        Object.entries(markerMeshes).forEach(([n,m])=>{
-          if(n !== tourList[tourIdx]){
-            m.inner.material.color.setHex(0x00d4c8);
-            m.outer.material.color.setHex(0x00d4c8);
-            m.outer.material.opacity = 0.3;
-            m.inner.scale.setScalar(1.0);
-            m.outer.scale.setScalar(1.0);
-          }
-        });
-      }
-    } else {
-      // Arrived: active marker big gold pulse
-      const pulse = 0.9 + 0.12*Math.sin(frame*0.05);
-      Object.values(markerMeshes).forEach(m=>{
-        m.outer.scale.x = m.outer.scale.y = m.outer.scale.z =
-          (m.inner.material.color.getHex() === 0xe8b84b ? 1.8 : 1.0) * pulse;
-      });
-    }
-  } else if(autoSpin){
-    globeGroup.rotation.y += 0.0015;
-  } else if(!isDragging){
-    // Inertia
-    velX *= 0.95; velY *= 0.95;
-    globeGroup.rotation.y += velX * 0.001;
-    if(Math.abs(velX) < 0.05 && Math.abs(velY) < 0.05) {
-      autoSpin = true;
-    }
-  }
-
-  // Pulse markers
-  const pulse = 0.9 + 0.12*Math.sin(frame*0.05);
-  Object.values(markerMeshes).forEach(m=>{
-    m.outer.scale.x = m.outer.scale.y = m.outer.scale.z =
-      (m.inner.material.color.getHex() === 0xe8b84b ? 1.8 : 1.0) * pulse;
+// Load TopoJSON
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+  .then(r => r.json())
+  .then(world => {
+    worldTopo = world;
+    buildMap(world);
   });
 
-  animateClouds();
-  renderer.render(scene, camera);
-}
-animate();
+function buildMap(world) {
+  const countries = topojson.feature(world, world.objects.countries);
+  const borders   = topojson.mesh(world, world.objects.countries, (a,b) => a !== b);
+  const sphere    = {type:'Sphere'};
 
-// ── Rotate globe to face country
-function rotateTo(lat, lng){
-  targetRotY = -(lng+90)*Math.PI/180;
-  targetRotX = lat*Math.PI/180;
+  // Sphere outline
+  mapG.insert('path','#grat-layer')
+    .datum(sphere)
+    .attr('d', pathGen)
+    .attr('fill', 'url(#ocean-grad)')
+    .attr('stroke','#1a2d47')
+    .attr('stroke-width','0.5');
+
+  // Graticule
+  const grat = d3.geoGraticule()();
+  gratLayer.append('path')
+    .datum(grat)
+    .attr('d', pathGen)
+    .attr('fill','none')
+    .attr('stroke','rgba(26,45,71,0.5)')
+    .attr('stroke-width','0.35');
+
+  // Countries
+  landLayer.selectAll('path')
+    .data(countries.features)
+    .join('path')
+      .attr('class','cty-path')
+      .attr('d', pathGen)
+      .attr('data-id', d => String(d.id))
+      .attr('fill', d => visitedFill(d))
+      .attr('stroke','#1a3050')
+      .attr('stroke-width','0.4')
+      .on('mouseenter', function(ev, d){
+        const a2 = NUM_TO_A2[String(d.id)];
+        const c = a2 ? COUNTRIES.find(x => x.code === a2) : null;
+        if(!c) return;
+        const vis = visited.has(c.name);
+        tip.innerHTML = `${c.emoji} <strong style="color:#dde5f4">${c.name}</strong>${vis ? ' <span style="color:#00d4c8;margin-left:6px">✓ visited</span>' : ''}`;
+        tip.style.opacity = '1';
+        if(!vis) d3.select(this).attr('fill','#152840');
+      })
+      .on('mousemove', ev => {
+        tip.style.left = (ev.clientX+16)+'px';
+        tip.style.top  = (ev.clientY-10)+'px';
+      })
+      .on('mouseleave', function(ev, d){
+        tip.style.opacity = '0';
+        d3.select(this).attr('fill', visitedFill(d));
+      });
+
+  // Borders
+  borderLayer.append('path')
+    .datum(borders)
+    .attr('d', pathGen)
+    .attr('fill','none')
+    .attr('stroke','#1a3050')
+    .attr('stroke-width','0.4');
+
+  // Draw pins for already-visited
+  visited.forEach(name => addPin(name));
 }
 
+function visitedFill(d) {
+  const a2 = NUM_TO_A2[String(d.id)];
+  if(!a2) return '#0d1e33';
+  const c = COUNTRIES.find(x => x.code === a2);
+  if(!c) return '#0d1e33';
+  return visited.has(c.name) ? '#00897b' : '#0d1e33';
+}
+
+function updateCountryColor(name) {
+  if(!worldTopo) return;
+  const c = countryMap[name];
+  if(!c) return;
+  const num = A2_TO_NUM[c.code];
+  if(!num) return;
+  const vis = visited.has(name);
+  landLayer.selectAll(`path[data-id="${num}"]`)
+    .transition().duration(350)
+    .attr('fill', vis ? '#00897b' : '#0d1e33');
+}
+
+function addPin(name) {
+  const c = countryMap[name];
+  if(!c || pinData[name]) return;
+  pinData[name] = c;
+  const [px, py] = projection([c.lng, c.lat]);
+  const k = d3.zoomTransform(svg.node()).k;
+
+  const g2 = pinLayer.append('g')
+    .attr('class','pin-g')
+    .datum(c)
+    .attr('data-name', name)
+    .attr('transform', `translate(${px},${py}) scale(${1/k})`)
+    .style('cursor','pointer')
+    .on('mouseenter', ev => {
+      tip.innerHTML = `${c.emoji} <strong style="color:#dde5f4">${c.name}</strong> <span style="color:#00d4c8;margin-left:6px">✓ visited</span>`;
+      tip.style.opacity='1';
+    })
+    .on('mousemove', ev => {
+      tip.style.left=(ev.clientX+16)+'px';
+      tip.style.top=(ev.clientY-10)+'px';
+    })
+    .on('mouseleave', ()=>{ tip.style.opacity='0'; });
+
+  // Pulse ring
+  g2.append('circle').attr('class','pin-ring')
+    .attr('r',10).attr('fill','rgba(0,212,200,0.12)')
+    .attr('stroke','rgba(0,212,200,0.7)').attr('stroke-width','1.2');
+  // Dot
+  g2.append('circle').attr('class','pin-dot')
+    .attr('r',4.5).attr('fill','#00d4c8')
+    .attr('stroke','#fff').attr('stroke-width','1.2');
+  // Flag emoji
+  g2.append('text')
+    .attr('text-anchor','middle').attr('y',-14)
+    .attr('font-size','12px').attr('pointer-events','none')
+    .text(c.emoji);
+
+  g2.attr('opacity',0).transition().duration(500).attr('opacity',1);
+  pulsePinRing(g2, name);
+}
+
+function pulsePinRing(g2, name) {
+  const ring = g2.select('.pin-ring');
+  (function pulse(){
+    if(!pinData[name]) return;
+    ring.transition().duration(1400).ease(d3.easeSinInOut)
+      .attr('r',14).attr('stroke-width','0.6').attr('fill','rgba(0,212,200,0.03)')
+      .transition().duration(1400).ease(d3.easeSinInOut)
+      .attr('r',10).attr('stroke-width','1.2').attr('fill','rgba(0,212,200,0.12)')
+      .on('end', pulse);
+  })();
+}
+
+function removePin(name) {
+  delete pinData[name];
+  pinLayer.selectAll(`.pin-g[data-name="${CSS.escape(name)}"]`)
+    .transition().duration(300).attr('opacity',0).remove();
+}
+
+// Highlight pin for tour
+function setMarkerActive(name, active) {
+  pinLayer.selectAll(`.pin-g[data-name="${CSS.escape(name)}"]`)
+    .select('.pin-dot')
+    .transition().duration(300)
+    .attr('fill', active ? '#e8b84b' : '#00d4c8')
+    .attr('r', active ? 7 : 4.5);
+  pinLayer.selectAll(`.pin-g[data-name="${CSS.escape(name)}"]`)
+    .select('.pin-ring')
+    .transition().duration(300)
+    .attr('stroke', active ? 'rgba(232,184,75,0.9)' : 'rgba(0,212,200,0.7)')
+    .attr('fill', active ? 'rgba(232,184,75,0.15)' : 'rgba(0,212,200,0.12)');
+}
+
+// Pan + zoom to a country (used by tour)
+function rotateTo(lat, lng) {
+  const [px, py] = projection([lng, lat]);
+  const w = mapWrap.clientWidth, h = mapWrap.clientHeight;
+  const curK = d3.zoomTransform(svg.node()).k;
+  const targetK = Math.max(curK, 3);
+  const tx = w/2 - px * targetK;
+  const ty = h/2 - py * targetK;
+  svg.transition().duration(1200).ease(d3.easeCubicInOut)
+    .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(targetK));
+}
+
+// Resize handler
+function resize() {
+  mapWidth  = mapWrap.clientWidth  || 800;
+  mapHeight = mapWrap.clientHeight || 600;
+  projection.scale(mapWidth / 6.4).translate([mapWidth/2, mapHeight/2]);
+  pathGen = d3.geoPath().projection(projection);
+  svg.attr('width', mapWidth).attr('height', mapHeight);
+  if(worldTopo) {
+    landLayer.selectAll('path').attr('d', pathGen);
+    borderLayer.selectAll('path').attr('d', pathGen);
+    gratLayer.selectAll('path').attr('d', pathGen);
+    mapG.select('path').attr('d', pathGen); // sphere
+    // Reposition pins
+    const k = d3.zoomTransform(svg.node()).k;
+    pinLayer.selectAll('.pin-g').each(function(d){
+      const [px2, py2] = projection([d.lng, d.lat]);
+      d3.select(this).attr('transform', `translate(${px2},${py2}) scale(${1/k})`);
+    });
+  }
+}
+resize();
+new ResizeObserver(resize).observe(mapWrap);
+
+// Tour state (replaces Three.js tour vars)
 // ═══════════════════════════════════════════════════════
 // UI LOGIC
 // ═══════════════════════════════════════════════════════
@@ -2198,7 +2193,8 @@ searchEl.addEventListener('focus', ()=>renderSuggestions(searchEl.value.trim()))
 function addCountry(name){
   if(visited.has(name)) return;
   visited.add(name);
-  addMarker(name);
+  addPin(name);
+  updateCountryColor(name);
   renderVisited();
   updateStats();
   updateMobCount();
@@ -2209,7 +2205,8 @@ function addCountry(name){
 
 function removeCountry(name){
   visited.delete(name);
-  removeMarker(name);
+  removePin(name);
+  updateCountryColor(name);
   renderVisited();
   updateStats();
   updateMobCount();
@@ -2323,9 +2320,9 @@ canvas.addEventListener('touchstart', ()=>{
 
 
 // ═══════════════════════════════════════════════════════
+let tourActive = false;
 let tourList = [];
 let tourIdx = 0;
-let tourSpinning = false;
 let tourFactIdx = 0;
 let tourTimer = null;
 let tourPaused = false;
@@ -2347,7 +2344,6 @@ function startTour(){
   });
   tourIdx=0; tourPaused=false;
   tourActive=true;
-  autoSpin=false;
   document.getElementById('tour-overlay').className='active';
   document.getElementById('tour-pause-play').textContent='⏸ Pause';
   showTourCountry();
@@ -2356,8 +2352,6 @@ function startTour(){
 function stopTour(){
   clearTimeout(tourTimer);
   tourActive=false;
-  tourSpinning=false;
-  autoSpin=true;
   document.getElementById('tour-overlay').className='hidden';
   if(prevActiveCountry){ setMarkerActive(prevActiveCountry, false); prevActiveCountry=null; }
   document.getElementById('tour-card').classList.remove('visible');
@@ -2383,9 +2377,7 @@ function showTourCountry(){
   setMarkerActive(name, true);
   prevActiveCountry = name;
 
-  // Rotate globe with cinematic spin
-  autoSpin=false;
-  tourSpinning=true;
+  // Pan map to country
   rotateTo(c.lat, c.lng);
 
   // Fact data
@@ -2478,15 +2470,12 @@ function codeMapBuild(){
 }
 function loadCodes(codesStr){
   visited.clear();
-  Object.values(markerMeshes).forEach(m=>{
-    globeGroup.remove(m.outer); globeGroup.remove(m.inner);
-  });
-  Object.keys(markerMeshes).forEach(k=>delete markerMeshes[k]);
+  Object.keys(pinData).forEach(k => removePin(k));
   if(!codesStr) return;
   const codeToName = codeMapBuild();
   codesStr.split(',').forEach(code=>{
     const name = codeToName[code.trim()];
-    if(name){ visited.add(name); addMarker(name); }
+    if(name){ visited.add(name); addPin(name); updateCountryColor(name); }
   });
   renderVisited();
   updateStats();
