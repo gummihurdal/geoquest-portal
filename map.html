@@ -373,15 +373,33 @@ html, body {
   pointer-events: none;
   transition: opacity 0.4s;
 }
+/* Desktop: globe area stays fully interactive during tour */
+@media (min-width: 701px) {
+  #tour-overlay.active {
+    pointer-events: none; /* card itself has pointer-events: auto */
+  }
+}
 #tour-overlay.hidden { opacity: 0; pointer-events: none; }
 #tour-overlay.active { opacity: 1; pointer-events: auto; }
 
-/* Tour background dims panel */
+/* Tour background dims panel only — globe stays fully visible on desktop */
 #tour-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(4,6,14,0.65);
   backdrop-filter: blur(2px);
+}
+@media (min-width: 701px) {
+  /* On desktop: dim only the left panel, not the globe */
+  #tour-backdrop {
+    right: auto;
+    width: 360px;
+  }
+  /* Tour card sits at bottom-right of globe */
+  #tour-card {
+    right: 40px;
+    bottom: 40px;
+  }
 }
 
 /* Tour card - bottom right cinematic style */
