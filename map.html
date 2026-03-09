@@ -7,7 +7,8 @@
 <meta name="description" content="Track every country you've visited. Watch your globe come alive with a cinematic tour of your travels.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
 // ── HERO DISMISS ──
 function dismissHero(){
   const b=document.getElementById('hero-banner');
@@ -22,14 +23,17 @@ function showHero(){
   b.classList.remove('collapsed');
   sb.classList.remove('visible');
 }
-// Restore dismissed state
-try{
-  if(localStorage.getItem('gq-hero-dismissed')==='1'){
-    document.getElementById('hero-banner').classList.add('collapsed');
-    document.getElementById('hero-show-btn').classList.add('visible');
-  }
-}catch(e){}
-
+// Restore dismissed state on load
+document.addEventListener('DOMContentLoaded',function(){
+  try{
+    if(localStorage.getItem('gq-hero-dismissed')==='1'){
+      var b=document.getElementById('hero-banner');
+      var sb=document.getElementById('hero-show-btn');
+      if(b)b.classList.add('collapsed');
+      if(sb)sb.classList.add('visible');
+    }
+  }catch(e){}
+});
 </script>
 <style>
 :root {
@@ -1002,7 +1006,7 @@ html, body {
       <button id="nav-signout-btn" onclick="handleSignOut()">Sign out</button>
     </div>
     <button id="nav-login-btn" onclick="showAuthModal()">🔐 Sign in</button>
-    <a href="https://trivia.azurenexus.com" class="topnav-cta" onclick="window.open('https://trivia.azurenexus.com','_blank'); return false;">▶ Play Now</a>
+
   </div>
 </nav>
 
