@@ -1199,6 +1199,63 @@ html, body {
 }
 #nav-login-btn:hover { background: rgba(0,212,200,0.18); }
 
+
+/* ── COMPARE / SHARE BANNER ── */
+#share-view-banner {
+  display: none;
+  margin: 0 14px 10px;
+  background: linear-gradient(135deg, rgba(232,184,75,0.1), rgba(0,212,200,0.08));
+  border: 1px solid rgba(232,184,75,0.4);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+#share-view-banner.visible { display: block; }
+.svb-title { font-weight: 700; color: #e8b84b; margin-bottom: 4px; font-size: 13px; }
+.svb-sub { color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+.svb-actions { display: flex; gap: 8px; }
+.svb-btn {
+  flex: 1; padding: 7px 10px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; transition: all 0.15s;
+}
+.svb-btn-primary { background: rgba(0,212,200,0.15); color: var(--teal); border: 1px solid rgba(0,212,200,0.3); }
+.svb-btn-primary:hover { background: rgba(0,212,200,0.25); }
+.svb-btn-secondary { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+.svb-btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+/* Compare legend */
+#compare-legend {
+  display: none;
+  margin: 0 14px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+#compare-legend.visible { display: flex; gap: 14px; flex-wrap: wrap; }
+.cl-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.cl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.cl-dot.mine { background: #00d4c8; }
+.cl-dot.theirs { background: #e8804a; }
+.cl-dot.both { background: #e8b84b; }
+
+/* Compare stats */
+#compare-stats {
+  display: none;
+  margin: 0 14px 10px;
+  gap: 6px;
+}
+#compare-stats.visible { display: flex; }
+.cs-chip {
+  flex: 1; text-align: center; padding: 8px 6px; border-radius: 8px;
+  font-size: 11px; font-weight: 600;
+}
+.cs-chip .cs-num { display: block; font-size: 18px; font-weight: 800; margin-bottom: 2px; }
+.cs-chip.mine { background: rgba(0,212,200,0.1); color: #00d4c8; }
+.cs-chip.both { background: rgba(232,184,75,0.1); color: #e8b84b; }
+.cs-chip.theirs { background: rgba(232,128,74,0.1); color: #e8804a; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -1277,6 +1334,30 @@ html, body {
     </div>
 
     
+  <!-- ── SHARE VIEW BANNER ── -->
+  <div id="share-view-banner">
+    <div class="svb-title">👀 Viewing a shared map</div>
+    <div class="svb-sub" id="svb-sub-text">Sign in to compare with your own travel history</div>
+    <div class="svb-actions">
+      <button class="svb-btn svb-btn-primary" id="svb-compare-btn" onclick="activateCompare()">🗺 Compare with mine</button>
+      <button class="svb-btn svb-btn-secondary" onclick="exitSharedView()">✕ Exit view</button>
+    </div>
+  </div>
+
+  <!-- ── COMPARE LEGEND ── -->
+  <div id="compare-legend">
+    <div class="cl-item"><div class="cl-dot mine"></div> Only you</div>
+    <div class="cl-item"><div class="cl-dot both"></div> Both visited</div>
+    <div class="cl-item"><div class="cl-dot theirs"></div> Only them</div>
+  </div>
+
+  <!-- ── COMPARE STATS ── -->
+  <div id="compare-stats">
+    <div class="cs-chip mine"><span class="cs-num" id="cs-mine">0</span>Only you</div>
+    <div class="cs-chip both"><span class="cs-num" id="cs-both">0</span>In common</div>
+    <div class="cs-chip theirs"><span class="cs-num" id="cs-theirs">0</span>Only them</div>
+  </div>
+
   <!-- ── HERO BANNER ── -->
   <div id="hero-banner">
     <div class="hero-bg-dots"></div>
@@ -2526,11 +2607,18 @@ function updateURL(){
 }
 
 document.getElementById('share-btn').addEventListener('click', ()=>{
-  const url = window.location.href;
-  navigator.clipboard?.writeText(url).then(()=>{
+  // Build clean share URL with only the ?v= param
+  const codes = [...visited].map(n=>countryMap[n]?.code).filter(Boolean).join(',');
+  if(!codes){ alert('Add some countries first!'); return; }
+  const shareUrl = new URL(location.href);
+  shareUrl.search = '';
+  shareUrl.searchParams.set('v', codes);
+  const urlStr = shareUrl.toString();
+  navigator.clipboard?.writeText(urlStr).then(()=>{
     const t = document.getElementById('copy-toast');
+    t.textContent = '🔗 Share link copied!';
     t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 2400);
+    setTimeout(()=>{ t.classList.remove('show'); t.textContent='🔗 Link copied!'; }, 2800);
   });
 });
 
@@ -2693,6 +2781,7 @@ sb.auth.onAuthStateChange(async (event, session)=>{
     hideAuthModal();
     document.getElementById('app').style.visibility = '';
     await loadFromDb(currentUser.id);
+    initShareView();
   } else if(event==='SIGNED_OUT'){
     currentUser=null;
     updateNavAuth(null);
@@ -2708,13 +2797,138 @@ sb.auth.onAuthStateChange(async (event, session)=>{
     updateNavAuth(currentUser);
     document.getElementById('app').style.visibility = '';
     await loadFromDb(currentUser.id);
+    initShareView();
   } else {
-    // Not signed in — keep app hidden, show full auth wall
-    showAuthModal(true);
+    // Not signed in — if there's a ?v= param, show read-only shared view without auth wall
+    if(getSharedParam()){
+      document.getElementById('app').style.visibility = '';
+      updateNavAuth(null);
+      // Wait for map to load then show shared view
+      const waitForMap = setInterval(()=>{
+        if(worldTopo){ clearInterval(waitForMap); initShareView(); }
+      }, 200);
+    } else {
+      showAuthModal(true);
+    }
   }
 })();
 
 // Page is fully auth-gated — no search gate needed here
+
+
+// ═══════════════════════════════════════════════════════
+// SHARE & COMPARE
+// ═══════════════════════════════════════════════════════
+let sharedCodes = null;       // Set of country names from ?v= URL
+let compareActive = false;
+
+function getSharedParam(){
+  return new URLSearchParams(location.search).get('v');
+}
+
+function initShareView(){
+  const vParam = getSharedParam();
+  if(!vParam) return;
+
+  // Parse shared countries into a Set
+  const codeToName = codeMapBuild();
+  sharedCodes = new Set();
+  vParam.split(',').forEach(code => {
+    const name = codeToName[code.trim()];
+    if(name) sharedCodes.add(name);
+  });
+
+  // Show the banner
+  const banner = document.getElementById('share-view-banner');
+  banner.classList.add('visible');
+
+  if(currentUser){
+    document.getElementById('svb-sub-text').textContent =
+      `${sharedCodes.size} countries visited. Compare with your map?`;
+    document.getElementById('svb-compare-btn').style.display = '';
+  } else {
+    document.getElementById('svb-sub-text').textContent =
+      `${sharedCodes.size} countries visited — sign in to compare with your own history.`;
+    document.getElementById('svb-compare-btn').style.display = 'none';
+    // Disable editing when viewing without login
+    const searchInput = document.getElementById('search');
+    if(searchInput){ searchInput.disabled = true; searchInput.placeholder = 'Sign in to edit your map'; }
+    document.getElementById('panel-actions').style.opacity = '0.4';
+    document.getElementById('panel-actions').style.pointerEvents = 'none';
+  }
+
+  // Load shared map onto the map (read-only mode)
+  loadCodesShared(vParam);
+}
+
+function loadCodesShared(codesStr){
+  // Reset fills
+  landLayer.selectAll('.cty-path').attr('fill','#0d1e33');
+  const codeToName = codeMapBuild();
+  codesStr.split(',').forEach(code => {
+    const c = COUNTRIES.find(x => x.code === code.trim());
+    if(!c) return;
+    const num = A2_TO_NUM[c.code];
+    if(!num) return;
+    landLayer.selectAll(`path[data-id="${num}"]`).attr('fill','#e8804a');
+  });
+}
+
+function activateCompare(){
+  if(!sharedCodes || !currentUser) return;
+  compareActive = true;
+  document.getElementById('compare-legend').classList.add('visible');
+  document.getElementById('compare-stats').classList.add('visible');
+  document.getElementById('share-view-banner').classList.remove('visible');
+  renderCompareMap();
+}
+
+function renderCompareMap(){
+  if(!compareActive || !sharedCodes) return;
+  // Reset
+  landLayer.selectAll('.cty-path').attr('fill','#0d1e33');
+  let onlyMe = 0, onlyThem = 0, both = 0;
+
+  COUNTRIES.forEach(c => {
+    const mine = visited.has(c.name);
+    const theirs = sharedCodes.has(c.name);
+    if(!mine && !theirs) return;
+    const num = A2_TO_NUM[c.code];
+    if(!num) return;
+    let fill;
+    if(mine && theirs){ fill = '#e8b84b'; both++; }
+    else if(mine){ fill = '#00897b'; onlyMe++; }
+    else { fill = '#c0552a'; onlyThem++; }
+    landLayer.selectAll(`path[data-id="${num}"]`)
+      .transition().duration(300).attr('fill', fill);
+  });
+
+  document.getElementById('cs-mine').textContent = onlyMe;
+  document.getElementById('cs-both').textContent = both;
+  document.getElementById('cs-theirs').textContent = onlyThem;
+}
+
+function exitSharedView(){
+  sharedCodes = null;
+  compareActive = false;
+  document.getElementById('share-view-banner').classList.remove('visible');
+  document.getElementById('compare-legend').classList.remove('visible');
+  document.getElementById('compare-stats').classList.remove('visible');
+  // Reload own map
+  landLayer.selectAll('.cty-path').attr('fill','#0d1e33');
+  visited.forEach(name => updateCountryColor(name));
+  // Remove ?v= from URL
+  const url = new URL(location.href);
+  url.searchParams.delete('v');
+  history.replaceState(null,'',url.toString());
+}
+
+// Override updateCountryColor to respect compare mode
+const _origUpdateCountryColor = updateCountryColor;
+function updateCountryColor(name){
+  if(compareActive){ renderCompareMap(); return; }
+  _origUpdateCountryColor(name);
+}
 
 </script>
 
