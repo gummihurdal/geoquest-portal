@@ -461,6 +461,10 @@ html, body {
   transition: all 0.2s;
 }
 #share-btn:hover { border-color: var(--teal2); color: var(--teal); }
+#panel-foot { display: flex; gap: 8px; }
+#panel-foot button { flex: 1; }
+#tour-btn { background: linear-gradient(135deg, #003d3a, #004d48); border: 1px solid var(--teal2); color: var(--teal); padding: 11px; border-radius: 8px; font-family: var(--font-ui); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+#tour-btn:hover { background: linear-gradient(135deg, #005a55, #006b64); }
 
 /* ── GLOBE ── */
 #globe-wrap {
@@ -1500,6 +1504,7 @@ html, body {
 
   <div id="panel-foot">
     <button id="tour-btn">🌍 Cinematic Tour</button>
+    <button id="share-btn">🔗 Share My Map</button>
   </div>
 
 </div>
@@ -2721,7 +2726,8 @@ function updateURL(){
   history.replaceState(null,'',url.toString());
 }
 
-document.getElementById('share-btn').addEventListener('click', ()=>{
+const shareBtnEl = document.getElementById('share-btn');
+if(shareBtnEl) shareBtnEl.addEventListener('click', ()=>{
   // Build clean share URL with only the ?v= param
   const codes = [...visited].map(n=>countryMap[n]?.code).filter(Boolean).join(',');
   if(!codes){ alert('Add some countries first!'); return; }
