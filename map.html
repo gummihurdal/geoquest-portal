@@ -1075,6 +1075,21 @@ html, body {
 
 
 /* ── AUTH MODAL ── */
+#auth-browse-btn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.45);
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+#auth-browse-btn:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
+
 #auth-overlay {
   display: none;
   position: fixed; inset: 0; z-index: 9999;
@@ -2927,16 +2942,10 @@ function showAuthModal(hardGate){
   // In hard-gate mode hide the "browse without account" escape hatch
   const browseBtn = document.getElementById('auth-browse-btn');
   const browseDivider = document.getElementById('auth-browse-divider');
-  if(hardGate){
-    if(browseBtn) browseBtn.style.display='none';
-    if(browseDivider) browseDivider.style.display='none';
-  } else {
-    if(browseBtn) browseBtn.style.display='';
-    if(browseDivider) browseDivider.style.display='';
-  }
+  if(browseBtn) browseBtn.style.display='';
+  if(browseDivider) browseDivider.style.display='';
 }
 function hideAuthModal(){
-  if(!currentUser) return; // can't dismiss if not signed in
   document.getElementById('auth-overlay').style.display='none';
 }
 function setAuthMsg(msg, isErr){
@@ -3244,7 +3253,7 @@ function updateCountryColor(name){
 
     <div id="auth-msg" class="auth-msg" style="text-align:center;margin-top:8px;"></div>
     <hr class="auth-divider" id="auth-browse-divider">
-    <button id="auth-browse-btn" onclick="hideAuthModal()" style="display:none">Browse without account</button>
+    <button id="auth-browse-btn" onclick="hideAuthModal()">Browse without account →</button>
   </div>
 </div>
 
