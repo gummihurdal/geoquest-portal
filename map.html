@@ -2343,16 +2343,17 @@ function renderTinyIslandDots() {
 
     // Outer ring
     g2.append('circle')
-      .attr('r', isVis ? 6 : 4)
-      .attr('fill', isVis ? '#00897b' : '#1a3a5c')
-      .attr('stroke', isVis ? '#00d4c8' : '#2a4a6c')
-      .attr('stroke-width', 1.5);
-    // Label on hover
-    g2.append('text')
-      .attr('text-anchor','middle').attr('y', -8)
-      .attr('font-size','10px').attr('fill','rgba(200,220,240,0.7)')
-      .attr('pointer-events','none')
-      .text(c.emoji);
+      .attr('r', isVis ? 7 : 5)
+      .attr('fill', isVis ? '#00c9a7' : '#2a4a7c')
+      .attr('stroke', isVis ? '#ffffff' : '#4a7aac')
+      .attr('stroke-width', isVis ? 2 : 1.5)
+      .attr('opacity', 0.9);
+    // Inner dot
+    g2.append('circle')
+      .attr('r', isVis ? 3 : 2)
+      .attr('fill', isVis ? '#ffffff' : '#8abadc')
+      .attr('opacity', 0.8);
+    // Labels shown via tooltip on hover only
   });
 }
 
@@ -2552,7 +2553,7 @@ function updateMobCount(){
 }
 
 // Close panel when tapping map on mobile
-canvas.addEventListener('touchstart', ()=>{
+svg.node().addEventListener('touchstart', ()=>{
   if(isMobile()) closeMobilePanel();
 }, {passive:true});
 
