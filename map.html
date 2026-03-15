@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded',function(){
   --active-dot: #3b82f6;
   --danger: #ef4444;
   --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --bg-base: #09111f;
   --font-ui: 'Inter', system-ui, sans-serif;
 }
 
@@ -3324,7 +3325,7 @@ sb.auth.onAuthStateChange(async (event, session)=>{
     currentUser=null;
     updateNavAuth(null);
     document.getElementById('app').style.visibility = 'hidden';
-    showAuthModal(true);
+    showAuthModal();
   }
 });
 
