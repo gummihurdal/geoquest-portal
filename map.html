@@ -422,7 +422,13 @@ html, body {
   gap: 8px;
 }
 
+#panel-foot {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
 #tour-btn {
+
   width: 100%;
   padding: 13px;
   background: linear-gradient(135deg, #003d3a, #004d48);
@@ -1492,6 +1498,10 @@ html, body {
     </div>
   </div>
 
+  <div id="panel-foot">
+    <button id="tour-btn">🌍 Cinematic Tour</button>
+  </div>
+
 </div>
 
 <script>
@@ -2128,6 +2138,7 @@ const mapG = svg.append('g').attr('id','map-g');
 const gratLayer   = mapG.append('g').attr('id','grat-layer');
 const landLayer   = mapG.append('g').attr('id','land-layer');
 const borderLayer = mapG.append('g').attr('id','border-layer');
+const pinLayer    = mapG.append('g').attr('id','pin-layer');
 
 // Tooltip
 const tip = document.createElement('div');
@@ -2585,7 +2596,8 @@ let tourPaused = false;
 const TOUR_INTERVAL = 7000; // 7s per country
 let prevActiveCountry = null;
 
-document.getElementById('tour-btn').addEventListener('click', startTour);
+const tourBtnEl = document.getElementById('tour-btn');
+if(tourBtnEl) tourBtnEl.addEventListener('click', startTour);
 document.getElementById('tour-stop').addEventListener('click', stopTour);
 document.getElementById('tour-next').addEventListener('click', ()=>{ tourIdx=(tourIdx+1)%tourList.length; showTourCountry(); });
 document.getElementById('tour-prev').addEventListener('click', ()=>{ tourIdx=(tourIdx-1+tourList.length)%tourList.length; showTourCountry(); });
