@@ -177,7 +177,361 @@
     <link rel="modulepreload" crossorigin href="/assets/router-D8a8Cqz7.js">
     <link rel="modulepreload" crossorigin href="/assets/three-PYZbddWx.js">
     <link rel="stylesheet" crossorigin href="/assets/index-8MxFZavd.css?v=3">
-  </head>
+  <!-- GEOQUEST EDUCATIONAL OVERRIDE -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════
+   GEOQUEST EDUCATIONAL PLATFORM — PRO THEME
+   Transform: gaming app → academic learning platform
+═══════════════════════════════════════════════════════ */
+
+/* ── ROOT: Complete color system override ── */
+:root {
+  /* Academy Navy palette */
+  --background:    #0b1422 !important;
+  --foreground:    #e8edf5 !important;
+  --card:          #111d2e !important;
+  --card-foreground: #e8edf5 !important;
+  --primary:       #3b82f6 !important;
+  --primary-foreground: #ffffff !important;
+  --secondary:     #1a2840 !important;
+  --secondary-foreground: #94a3b8 !important;
+  --muted:         #1a2840 !important;
+  --muted-foreground: #64748b !important;
+  --accent:        #10b981 !important;
+  --accent-foreground: #ffffff !important;
+  --border:        #1e3050 !important;
+  --input:         #152035 !important;
+  --ring:          #3b82f6 !important;
+  --sidebar:       #0d1829 !important;
+  --sidebar-foreground: #e2e8f0 !important;
+  --sidebar-primary: #3b82f6 !important;
+  --sidebar-accent: #1a2840 !important;
+  --sidebar-border: #1e3050 !important;
+  --radius:        0.625rem !important;
+}
+
+/* ── Global font upgrade ── */
+* { font-family: 'Inter', 'DM Sans', system-ui, sans-serif !important; }
+h1, h2, h3, .font-display, [class*="title"] { 
+  font-family: 'Space Grotesk', 'Inter', sans-serif !important; 
+}
+
+/* ── Body ── */
+body {
+  background: #0b1422 !important;
+  color: #e8edf5 !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+/* ═══ SIDEBAR TRANSFORMATION ═══ */
+/* Sidebar container */
+[data-sidebar="sidebar"],
+aside[class*="sidebar"],
+aside[class*="group"],
+.peer[class*="sidebar"],
+aside { 
+  background: #0d1829 !important;
+  border-right: 1px solid #1e3050 !important;
+}
+
+/* Sidebar header/brand */
+[data-sidebar="header"],
+aside [class*="header"] {
+  border-bottom: 1px solid #1e3050 !important;
+  padding: 20px 16px !important;
+}
+
+/* Logo text */
+[data-sidebar="header"] span,
+aside [class*="logo"],
+aside [class*="brand"] {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+  letter-spacing: -0.3px !important;
+}
+
+/* Sidebar menu labels (MENU, GAME MODES) */
+[data-sidebar="group-label"],
+aside [class*="group-label"],
+aside [class*="GroupLabel"] {
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  font-weight: 600 !important;
+  color: #3b82f6 !important;
+  text-transform: uppercase !important;
+  padding: 12px 16px 6px !important;
+  opacity: 0.7 !important;
+}
+
+/* Sidebar nav items */
+[data-sidebar="menu-button"],
+[data-sidebar="menu-item"] button,
+aside li button,
+aside li a {
+  border-radius: 8px !important;
+  margin: 1px 8px !important;
+  padding: 9px 12px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: #94a3b8 !important;
+  transition: all 0.15s !important;
+  width: calc(100% - 16px) !important;
+}
+[data-sidebar="menu-button"]:hover,
+[data-sidebar="menu-item"] button:hover {
+  background: #1a2840 !important;
+  color: #e2e8f0 !important;
+}
+[data-sidebar="menu-button"][data-active="true"],
+[data-sidebar="menu-button"].active,
+[data-active="true"] {
+  background: rgba(59,130,246,0.15) !important;
+  color: #60a5fa !important;
+  font-weight: 600 !important;
+}
+
+/* Play Now button in sidebar */
+aside button[class*="bg-primary"],
+aside [class*="PlayBtn"],
+aside button:first-of-type {
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.3) !important;
+}
+
+/* ═══ MAIN CONTENT ═══ */
+main, [class*="main-content"], .flex-1[class*="overflow"] {
+  background: #0b1422 !important;
+}
+
+/* ═══ HERO SECTION ═══ */
+[class*="hero"],
+[class*="Hero"],
+div[class*="relative"][class*="h-"] {
+  background: linear-gradient(160deg, #0f1e35 0%, #0b1422 60%, #0d1f18 100%) !important;
+}
+
+/* Hero headline */
+[class*="hero"] h1,
+[class*="Hero"] h1,
+h1[class*="text-5xl"],
+h1[class*="text-4xl"] {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: -1px !important;
+  background: linear-gradient(135deg, #fff 0%, #93c5fd 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ═══ CARD SYSTEM ═══ */
+[class*="rounded-"][class*="border"],
+[class*="card"],
+.bg-card {
+  background: #111d2e !important;
+  border: 1px solid #1e3050 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
+}
+[class*="rounded-"][class*="border"]:hover {
+  border-color: #2d4a7a !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+  transform: translateY(-1px) !important;
+  transition: all 0.2s !important;
+}
+
+/* ═══ STAT/METRIC CARDS ═══ */
+[class*="stat"],
+[class*="Stat"],
+div[class*="flex"][class*="items-center"][class*="gap"][class*="rounded"] {
+  background: #111d2e !important;
+  border: 1px solid #1e3050 !important;
+}
+
+/* ═══ BUTTONS ═══ */
+/* Primary CTA */
+button[class*="bg-primary"],
+[class*="Button"][class*="primary"],
+button.bg-primary {
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.3) !important;
+  transition: all 0.2s !important;
+}
+button[class*="bg-primary"]:hover {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  box-shadow: 0 6px 24px rgba(59,130,246,0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Secondary/Ghost buttons */
+button[class*="bg-secondary"],
+button[class*="outline"],
+button[class*="ghost"] {
+  background: #1a2840 !important;
+  border: 1px solid #1e3050 !important;
+  color: #94a3b8 !important;
+  border-radius: 10px !important;
+}
+button[class*="bg-secondary"]:hover,
+button[class*="outline"]:hover {
+  background: #1e3050 !important;
+  color: #e2e8f0 !important;
+  border-color: #2d4a7a !important;
+}
+
+/* ═══ GAME MODE CARDS ═══ */
+[class*="game"],
+[class*="GameMode"],
+[class*="mode-card"] {
+  background: #111d2e !important;
+  border: 1px solid #1e3050 !important;
+  border-radius: 14px !important;
+  transition: all 0.2s !important;
+}
+[class*="game"]:hover,
+[class*="GameMode"]:hover {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.2), 0 8px 24px rgba(0,0,0,0.3) !important;
+}
+
+/* ═══ BADGES & TAGS ═══ */
+[class*="badge"],
+[class*="Badge"],
+[class*="tag"],
+span[class*="rounded-full"][class*="text-xs"] {
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  padding: 3px 10px !important;
+  border-radius: 100px !important;
+}
+
+/* ═══ TRAVEL MAP PROMO CARD ═══ */
+[class*="travel"],
+[class*="Travel"],
+div[class*="teal"],
+div[class*="emerald"],
+.from-teal,
+[class*="from-teal"] {
+  background: linear-gradient(135deg, #0d2218, #0f2d1e) !important;
+  border: 1px solid rgba(16,185,129,0.25) !important;
+  border-radius: 14px !important;
+}
+
+/* ═══ TOPBAR / NAVBAR (for standalone pages) ── */
+nav[class*="top"],
+#topnav,
+.topnav {
+  background: rgba(11,20,34,0.96) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid #1e3050 !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3) !important;
+}
+
+/* ═══ LEADERBOARD / TABLE ═══ */
+[class*="leaderboard"],
+[class*="Leaderboard"],
+table, .table {
+  border-color: #1e3050 !important;
+}
+thead tr, thead th {
+  background: #0d1829 !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid #1e3050 !important;
+}
+tbody tr:hover td { background: rgba(30,48,80,0.4) !important; }
+
+/* ═══ FORM INPUTS ═══ */
+input, textarea, select {
+  background: #152035 !important;
+  border: 1px solid #1e3050 !important;
+  color: #e2e8f0 !important;
+  border-radius: 8px !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+}
+input::placeholder { color: #475569 !important; }
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d1829; }
+::-webkit-scrollbar-thumb { background: #1e3050; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2d4a7a; }
+
+/* ═══ AVATAR / PROFILE ═══ */
+[class*="avatar"],
+[class*="Avatar"] {
+  border: 2px solid #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2) !important;
+}
+
+/* ═══ PROGRESS BARS ═══ */
+[role="progressbar"] > div,
+[class*="progress"] > div,
+[class*="Progress"] > div {
+  background: linear-gradient(90deg, #2563eb, #3b82f6) !important;
+}
+
+/* ═══ NATION MATCH LINK ═══ */
+[href*="soul"],
+a[href="/soul.html"],
+[class*="nation"],
+[class*="Nation"] {
+  color: #a78bfa !important;
+}
+
+/* ═══ SECTION HEADERS ═══ */
+h2[class*="text-lg"],
+h2[class*="text-xl"],
+h2[class*="text-2xl"] {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.3px !important;
+  color: #e2e8f0 !important;
+}
+
+/* ═══ DIVIDERS ═══ */
+hr, [class*="separator"], [class*="Separator"] {
+  border-color: #1e3050 !important;
+}
+
+/* ═══ EDUCATIONAL RIBBON — subtle branding ═══ */
+body::after {
+  content: 'EDUCATIONAL PLATFORM';
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  font-size: 9px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  color: rgba(59,130,246,0.25);
+  font-family: 'Space Grotesk', sans-serif;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ═══ RESPONSIVE POLISH ═══ */
+@media (max-width: 768px) {
+  [data-sidebar="sidebar"] { background: #0b1422 !important; }
+}
+</style>
+<!-- END OVERRIDE -->
+</head>
   <body>
     <!-- ── AUTH OVERLAY ── -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
