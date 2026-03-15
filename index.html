@@ -531,6 +531,48 @@ body::after {
 }
 </style>
 <!-- END OVERRIDE -->
+<!-- NC PATCH -->
+<script>
+// Patch: add 77 missing countries to nc autocomplete array
+(function() {
+  var _origDefine = Object.defineProperty;
+  var _missing = ["Albania", "Andorra", "Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Benin", "Bhutan", "Bosnia and Herzegovina", "Botswana", "Brunei", "Burundi", "Cabo Verde", "Central African Republic", "China", "Comoros", "Congo", "Cyprus", "Djibouti", "Dominica", "Equatorial Guinea", "Eritrea", "Eswatini", "Fiji", "Gabon", "Gambia", "Grenada", "Guinea", "Guinea-Bissau", "Guyana", "Kiribati", "Kosovo", "Kyrgyzstan", "Lesotho", "Liberia", "Liechtenstein", "Maldives", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Micronesia", "Monaco", "Montenegro", "Namibia", "Nauru", "North Korea", "North Macedonia", "Palau", "Palestine", "Papua New Guinea", "Russia", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Seychelles", "Sierra Leone", "Solomon Islands", "Somalia", "South Sudan", "Suriname", "Taiwan", "Tajikistan", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Turkmenistan", "Tuvalu", "United Arab Emirates", "United Kingdom", "United States", "Vanuatu", "Vatican City"];
+  // Patch after scripts load
+  function patchNc() {
+    try {
+      // Find nc in all JS module scopes via React fiber
+      var input = document.querySelector('.guess-input');
+      if (!input) return;
+      // Trigger a synthetic change to expose nc, then patch via closure
+      // Alternative: override Array.prototype.filter temporarily to intercept nc
+      // Best approach: patch window after bundle loads
+      if (typeof window.__NC_PATCHED === 'undefined') {
+        window.__NC_PATCHED = true;
+        // We'll intercept via the module system
+        var _origFilter = Array.prototype.filter;
+        Array.prototype.filter = function(fn) {
+          var result = _origFilter.call(this, fn);
+          // If this looks like a country filter (121 items array being filtered)
+          if (this.length >= 100 && this.length <= 130 && typeof this[0] === 'string' && this[0] === 'France') {
+            // This is nc! Add missing countries and re-filter
+            var expanded = this.concat(_missing.filter(m => !this.includes(m)));
+            window.__ncArray = expanded;
+            Array.prototype.filter = _origFilter; // restore
+            return _origFilter.call(expanded, fn);
+          }
+          return result;
+        };
+      }
+    } catch(e) {}
+  }
+  
+  // Try immediately and after DOM ready
+  document.addEventListener('DOMContentLoaded', patchNc);
+  setTimeout(patchNc, 2000);
+  setTimeout(patchNc, 4000);
+})();
+</script>
+<!-- END NC PATCH -->
 </head>
   <body>
     <!-- ── AUTH OVERLAY ── -->
