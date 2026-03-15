@@ -1290,6 +1290,134 @@ html, body {
   #mob-fab.hidden { opacity: 0; pointer-events: none; }
   #mob-fab-count { font-size: 16px; font-weight: 800; color: #fff; }
 }
+
+/* ══ MAP.HTML VISUAL POLISH ══ */
+
+/* Richer background */
+body { background: #030810 !important; }
+
+/* Panel refinements */
+#panel {
+  background: linear-gradient(180deg, #080f1e 0%, #060c18 100%) !important;
+  border-right: 1px solid rgba(0,180,170,0.15) !important;
+}
+
+/* Header */
+.panel-header h2 {
+  font-size: 20px !important;
+  background: linear-gradient(135deg, #dde5f4, #00d4c8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.3px;
+}
+
+/* Stats bar */
+.stat-num { 
+  font-size: 22px !important; 
+  font-weight: 700 !important;
+  color: #00d4c8 !important;
+}
+
+/* Progress bar */
+.prog-fill {
+  background: linear-gradient(90deg, #00a89e, #00d4c8) !important;
+  box-shadow: 0 0 8px rgba(0,212,200,0.4) !important;
+}
+
+/* Accordion continent headers */
+.acc-header {
+  border-radius: 8px !important;
+  transition: background 0.15s !important;
+}
+.acc-header:hover { background: rgba(0,212,200,0.08) !important; }
+.acc-name { font-size: 13px !important; font-weight: 600 !important; color: #c8d8f0 !important; }
+
+/* Checkboxes */
+.country-row input[type=checkbox]:checked + span { color: #00d4c8 !important; }
+
+/* Search input */
+.search-wrap input {
+  border-radius: 10px !important;
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(0,212,200,0.2) !important;
+  transition: border-color 0.2s !important;
+}
+.search-wrap input:focus { border-color: rgba(0,212,200,0.5) !important; outline: none !important; }
+
+/* Panel footer buttons */
+#panel-foot {
+  padding: 14px 16px !important;
+  gap: 10px !important;
+  background: rgba(0,0,0,0.2) !important;
+}
+#tour-btn {
+  background: linear-gradient(135deg, #003d3a, #005550) !important;
+  border: 1px solid rgba(0,212,200,0.3) !important;
+  color: #00d4c8 !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+}
+#tour-btn:hover {
+  background: linear-gradient(135deg, #005550, #006b64) !important;
+  box-shadow: 0 4px 16px rgba(0,212,200,0.25) !important;
+}
+#share-btn {
+  background: rgba(232,184,75,0.1) !important;
+  border: 1px solid rgba(232,184,75,0.3) !important;
+  color: #e8b84b !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+}
+#share-btn:hover {
+  background: rgba(232,184,75,0.18) !important;
+  box-shadow: 0 4px 16px rgba(232,184,75,0.2) !important;
+}
+
+/* Map background */
+#world-map { background: #030810 !important; }
+
+/* Ocean gradient improvement */
+#ocean-grad stop:first-child { stop-color: #061428 !important; }
+#ocean-grad stop:last-child  { stop-color: #040c1e !important; }
+
+/* Country hover glow */
+.land-path { transition: filter 0.15s !important; }
+.land-path:hover { filter: brightness(1.4) !important; }
+
+/* Visited countries brighter */
+.visited { fill: #00c9a7 !important; filter: drop-shadow(0 0 4px rgba(0,201,167,0.4)) !important; }
+
+/* Copy toast */
+#copy-toast {
+  background: #00a89e !important;
+  border-radius: 100px !important;
+  font-weight: 600 !important;
+}
+
+/* Top nav bar */
+.topnav {
+  background: rgba(3,8,16,0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(0,212,200,0.12) !important;
+}
+.topnav a { transition: color 0.15s !important; }
+.topnav a.active { color: #00d4c8 !important; }
+
+/* Mobile FAB */
+#mob-fab {
+  background: linear-gradient(135deg, #00a89e, #00d4c8) !important;
+  box-shadow: 0 6px 24px rgba(0,212,200,0.4) !important;
+}
+
+/* Visited chip */
+.visited-chip {
+  border-radius: 8px !important;
+  background: rgba(0,212,200,0.08) !important;
+  border: 1px solid rgba(0,212,200,0.2) !important;
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
