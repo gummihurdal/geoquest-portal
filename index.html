@@ -721,29 +721,6 @@ div:has(> [class*="MYSTERY"]),
 [class*="ring"] { ring-color: var(--blue-500) !important; }
 </style>
 <!-- END DESIGN SYSTEM v2 -->
-<!-- NC PATCH -->
-<script>
-(function(){
-  var _missing = ["Albania", "Andorra", "Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Benin", "Bhutan", "Bosnia and Herzegovina", "Botswana", "Brunei", "Burundi", "Cabo Verde", "Central African Republic", "China", "Comoros", "Congo", "Cyprus", "Djibouti", "Dominica", "Equatorial Guinea", "Eritrea", "Eswatini", "Fiji", "Gabon", "Gambia", "Grenada", "Guinea", "Guinea-Bissau", "Guyana", "Kiribati", "Kosovo", "Kyrgyzstan", "Lesotho", "Liberia", "Liechtenstein", "Maldives", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Micronesia", "Monaco", "Montenegro", "Namibia", "Nauru", "North Korea", "North Macedonia", "Palau", "Palestine", "Papua New Guinea", "Russia", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Seychelles", "Sierra Leone", "Solomon Islands", "Somalia", "South Sudan", "Suriname", "Taiwan", "Tajikistan", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Turkmenistan", "Tuvalu", "United Arab Emirates", "United Kingdom", "United States", "Vanuatu", "Vatican City"];
-  var _orig = Array.prototype.filter;
-  // Intercept every .filter() call — if it's nc (121 items, starts with France), expand it
-  Array.prototype.filter = function(fn, ctx) {
-    if (this.length === 121 && this[0] === 'France') {
-      // This is nc! Build expanded array once and cache it
-      if (!this.__expanded) {
-        var exp = _orig.call(this, function() { return true; }).concat(
-          _missing.filter(function(m) { return !_orig.call(this, function(x) { return x === m; })[0]; }, this)
-        );
-        Object.defineProperty(this, '__expanded', { value: exp, writable: true });
-      }
-      return _orig.call(this.__expanded, fn, ctx);
-    }
-    return _orig.call(this, fn, ctx);
-  };
-  window.__NC_PATCH_ACTIVE = true;
-})();
-</script>
-<!-- END NC PATCH -->
 </head>
   <body>
     <!-- ── AUTH OVERLAY ── -->
