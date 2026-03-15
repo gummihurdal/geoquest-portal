@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GeoQuest — Visitor Location</title>
+<meta name="robots" content="noindex">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d1a;color:#c0c0d0;font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#13132a;border:1px solid rgba(130,80,255,0.25);max-width:560px;width:100%;padding:40px 36px;border-radius:12px}
+h1{font-size:20px;font-weight:600;color:#fff;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.sub{font-size:13px;color:#666;margin-bottom:32px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+.row:last-of-type{border-bottom:none}
+.lbl{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#555}
+.val{font-size:15px;color:#e0e0ff;font-weight:500}
+.val.ip{font-size:18px;color:#8250ff;font-family:monospace}
+.flag{font-size:32px;margin-bottom:16px}
+.loading{font-style:italic;color:#444;font-size:14px;padding:40px 0;text-align:center}
+.back{display:inline-block;margin-top:28px;font-size:12px;color:#555;text-decoration:none;transition:color .2s}
+.back:hover{color:#8250ff}
+.badge{display:inline-block;background:rgba(130,80,255,0.15);color:#8250ff;font-size:11px;font-weight:600;letter-spacing:1px;padding:3px 10px;border-radius:20px;border:1px solid rgba(130,80,255,0.3)}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🌍 Visitor Location <span class="badge">ADMIN</span></h1>
+  <div class="sub">Real-time IP geolocation lookup</div>
+  <div id="content"><div class="loading">Detecting location…</div></div>
+  <a class="back" href="https://trivia.azurenexus.com">← Back to GeoQuest</a>
+</div>
+<script>
+async function load(){
+  try{
+    const r = await fetch('https://ipapi.co/json/');
+    const d = await r.json();
+    const flag = d.country_code ? String.fromCodePoint(...[...d.country_code].map(c=>0x1F1E0-65+c.charCodeAt(0))) : '🌐';
+    document.getElementById('content').innerHTML = `
+      <div class="flag">${flag}</div>
+      <div class="row"><span class="lbl">IP Address</span><span class="val ip">${d.ip||'—'}</span></div>
+      <div class="row"><span class="lbl">Country</span><span class="val">${d.country_name||'—'} (${d.country_code||'—'})</span></div>
+      <div class="row"><span class="lbl">Region</span><span class="val">${d.region||'—'}</span></div>
+      <div class="row"><span class="lbl">City</span><span class="val">${d.city||'—'}</span></div>
+      <div class="row"><span class="lbl">Postal Code</span><span class="val">${d.postal||'—'}</span></div>
+      <div class="row"><span class="lbl">Timezone</span><span class="val">${d.timezone||'—'}</span></div>
+      <div class="row"><span class="lbl">ISP / Org</span><span class="val">${d.org||'—'}</span></div>
+      <div class="row"><span class="lbl">Coordinates</span><span class="val">${d.latitude||'—'}, ${d.longitude||'—'}</span></div>
+    `;
+  }catch(e){
+    document.getElementById('content').innerHTML='<div class="loading">Could not detect location.</div>';
+  }
+}
+load();
+</script>
+</body>
+</html>
