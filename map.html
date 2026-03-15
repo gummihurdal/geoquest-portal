@@ -2946,6 +2946,8 @@ function showAuthModal(hardGate){
 }
 function hideAuthModal(){
   document.getElementById('auth-overlay').style.display='none';
+  // Show app in guest mode (read-only, no save)
+  document.getElementById('app').style.visibility='';
 }
 function setAuthMsg(msg, isErr){
   const el=document.getElementById('auth-msg');
@@ -3065,7 +3067,7 @@ sb.auth.onAuthStateChange(async (event, session)=>{
         if(worldTopo){ clearInterval(waitForMap); initShareView(); }
       }, 200);
     } else {
-      showAuthModal(true);
+      showAuthModal();
     }
   }
 })();
