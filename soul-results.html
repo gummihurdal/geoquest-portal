@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Your Country — Community Results · GeoQuest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -80,46 +80,78 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font-body);mi
 .top-pill .pill-name{font-size:13px;font-weight:600;color:rgba(255,255,255,0.8);}
 .top-pill .pill-count{font-size:12px;color:var(--teal);font-weight:700;}
 
-/* ── RESULTS POLISH ── */
+
+/* ── ATLAS ACADEMY — NATION MATCH RESULTS ── */
 :root {
-  --accent: #7c3aed;
-  --accent2: #a855f7;
-  --accent3: #c084fc;
-  --bg: #0a0a14;
-  --card: #12121e;
+  --bg-base: #09111f;
+  --bg-surface: #0e1929;
+  --bg-elevated: #132033;
+  --blue: #3b82f6; --blue-light: #60a5fa;
+  --teal: #14b8a6; --purple: #a855f7;
+  --text: #f1f5f9; --muted: #64748b;
+  --border: rgba(255,255,255,0.08);
 }
-body { background: var(--bg); }
+* { box-sizing: border-box; }
+body {
+  background: var(--bg-base) !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  color: var(--text) !important;
+  -webkit-font-smoothing: antialiased !important;
+}
 body::before {
   content: '';
   position: fixed; inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.15) 0%, transparent 60%);
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59,130,246,0.1) 0%, transparent 60%);
   pointer-events: none; z-index: 0;
 }
+/* Result card */
 .result-card {
-  position: relative; z-index: 1;
-  background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(168,85,247,0.08));
-  border: 1px solid rgba(124,58,237,0.3);
-  border-radius: 24px;
-  backdrop-filter: blur(10px);
+  background: linear-gradient(145deg, rgba(59,130,246,0.06), rgba(20,184,166,0.04)) !important;
+  border: 1px solid rgba(59,130,246,0.15) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5) !important;
+  backdrop-filter: blur(10px) !important;
 }
 .result-country-name {
-  font-family: 'Playfair Display', Georgia, serif;
-  background: linear-gradient(135deg, #fff 0%, var(--accent3) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 900 !important;
+  letter-spacing: -1px !important;
+  background: linear-gradient(135deg, #fff 0%, #93c5fd 50%, #2dd4bf 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }
 .match-bar-fill {
-  background: linear-gradient(90deg, var(--accent), var(--accent3)) !important;
-}
-.btn-retake, .btn-share {
+  background: linear-gradient(90deg, var(--blue), var(--teal)) !important;
   border-radius: 100px !important;
-  font-weight: 600 !important;
+  box-shadow: 0 0 12px rgba(59,130,246,0.3) !important;
 }
 .btn-share {
-  background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
-  box-shadow: 0 8px 24px rgba(124,58,237,0.35) !important;
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6) !important;
+  border-radius: 12px !important; font-weight: 700 !important;
+  box-shadow: 0 8px 28px rgba(59,130,246,0.35) !important;
+  transition: all 0.2s !important;
 }
 .btn-share:hover { transform: translateY(-2px) !important; }
+.btn-retake {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--muted) !important;
+  border-radius: 12px !important; font-weight: 600 !important;
+}
+.btn-retake:hover { color: var(--text) !important; border-color: rgba(255,255,255,0.2) !important; }
+/* Nav back */
+.nav-back {
+  position: fixed; top: 0; left: 0; right: 0; height: 52px;
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(9,17,31,0.95); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border); z-index: 100;
+  font-size: 13.5px; font-weight: 600;
+  color: rgba(148,163,184,0.8); text-decoration: none;
+  font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.2px;
+}
+.nav-back:hover { color: var(--text); }
 
 </style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PWS2YWY13L"></script>
